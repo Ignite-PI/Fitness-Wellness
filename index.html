@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Weekly Trivia | A Healthier, Happier You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand">
+      <span class="brand-mark">WT</span>
+      <div>
+        <h1>The Weekly Trivia</h1>
+        <p>A new issue every Sunday &middot; A healthier, happier you</p>
+      </div>
+    </div>
+    <nav>
+      <a href="#issue">This Week</a>
+      <a href="#reveal">Bonus Reveal</a>
+      <a href="#archive">Archive</a>
+    </nav>
+    <button id="exportBtn" class="export-btn" title="Print or save this issue as an image">Print / Save Image</button>
+    <div class="score-pill" title="Your all-time score">Score <b id="totalScore">0</b></div>
+  </header>
+
+  <main>
+    <section id="reveal" class="reveal-banner hidden"></section>
+
+    <section id="issue" class="issue">
+      <div class="issue-hero">
+        <span class="issue-tag" id="issueTag"></span>
+        <h2 id="issueTitle"></h2>
+        <p class="issue-sub" id="issueSub"></p>
+      </div>
+
+      <h3 class="section-title"><span>Did You Know?</span> Fun facts of the week</h3>
+      <div id="facts" class="facts-grid"></div>
+
+      <div class="bonus" id="bonus"></div>
+
+      <blockquote id="quote" class="quote"></blockquote>
+    </section>
+
+    <section class="next-up" id="nextUp"></section>
+
+    <section id="archive" class="archive">
+      <h3 class="section-title"><span>Archive</span> Catch up on past issues</h3>
+      <div id="archiveList" class="archive-list"></div>
+    </section>
+  </main>
+
+  <footer class="tips" id="tips"></footer>
+
+  <div id="toast" class="toast"></div>
+
+  <dialog id="exportDialog" class="export-dialog">
+    <div class="exp-head">
+      <h3>Print / Save Image</h3>
+      <button id="expClose" class="exp-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="exp-body">
+      <div class="exp-controls">
+        <label class="exp-label">Format</label>
+        <div class="exp-seg">
+          <label><input type="radio" name="fmt" value="image/png" checked /><span>PNG</span></label>
+          <label><input type="radio" name="fmt" value="image/jpeg" /><span>JPEG</span></label>
+        </div>
+        <p class="exp-hint">PNG = sharpest text. JPEG = smaller file, great for email.</p>
+
+        <label class="exp-label" for="expRes">Resolution (width)</label>
+        <select id="expRes">
+          <option value="600">Email: 600 px (recommended)</option>
+          <option value="1200" selected>Email HD / Retina: 1200 px</option>
+          <option value="1800">High: 1800 px</option>
+          <option value="2400">Print: 2400 px</option>
+        </select>
+        <p class="exp-hint">Most email layouts are 600 px wide. 1200 px looks crisp on phones and high-DPI screens.</p>
+
+        <p id="expInfo" class="exp-info"></p>
+        <div id="expActions" class="exp-actions">
+          <button id="expDownload" class="primary">Download</button>
+          <button id="expCopy">Copy</button>
+          <button id="expPrint">Print</button>
+        </div>
+        <p class="exp-hint">"Copy" lets you paste the image straight into Outlook or Gmail (Ctrl+V). Readers can click it to go to the Bonus Trivia.</p>
+
+        <label class="exp-label">Bonus Trivia link</label>
+        <a id="expLink" class="exp-link" target="_blank"></a>
+        <p class="exp-hint">Downloaded files can't contain links. After inserting a downloaded image in your email, select it and press <b>Ctrl+K</b> to add this link.</p>
+        <p id="expLocalWarn" class="exp-warn hidden">This link uses <b>localhost</b>, so it only works on your computer. Publish the site and set <code>SITE_URL</code> in data.js so email readers can open it.</p>
+      </div>
+      <div class="exp-preview"><img id="expPreview" alt="Image preview" /></div>
+    </div>
+  </dialog>
+
+  <script src="data.js"></script>
+  <script src="icons.js"></script>
+  <script src="app.js"></script>
+  <script src="export.js"></script>
+</body>
+</html>
