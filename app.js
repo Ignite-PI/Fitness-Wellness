@@ -1,4 +1,4 @@
-(() => {
+(async () => {
   const STORE_KEY = "weekly-trivia-v2";
   const $ = (id) => document.getElementById(id);
   const letters = ["A", "B", "C", "D"];
@@ -7,21 +7,41 @@
   const parseDate = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
   const fmtDate = (d) => d.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
 
-  // ?date=YYYY-MM-DD lets you preview the site as of another day (handy for testing reveals)
-  const override = new URLSearchParams(location.search).get("date");
-  const now = override ? parseDate(override) : new Date();
-
   const issues = [...window.ISSUES].sort((a, b) => parseDate(a.publish) - parseDate(b.publish));
-  const published = issues.filter((i) => parseDate(i.publish) <= now);
-  const upcoming = issues.find((i) => parseDate(i.publish) > now);
+  const params = new URLSearchParams(location.search);
+
+  // Released issues come from releases.json (managed on admin.html).
+  // ?preview=<id> shows the site as if everything up to that issue were released (not visible to readers).
+  const previewIdx = issues.findIndex((i) => i.id === params.get("preview"));
+  let releasedIds;
+  if (previewIdx >= 0) {
+    releasedIds = issues.slice(0, previewIdx + 1).map((i) => i.id);
+  } else {
+    try {
+      const res = await fetch("releases.json?t=" + Date.now(), { cache: "no-store" });
+      releasedIds = (await res.json()).released;
+    } catch {
+      // No releases.json available: fall back to the planned publish dates
+      releasedIds = issues.filter((i) => parseDate(i.publish) <= new Date()).map((i) => i.id);
+    }
+  }
+  const releasedSet = new Set(releasedIds);
+  const published = issues.filter((i) => releasedSet.has(i.id));
+  if (!published.length) published.push(issues[0]);
+  const upcoming = issues.find((i) => !published.includes(i));
   const current = published[published.length - 1];
   const nextRevealDate = upcoming ? parseDate(upcoming.publish)
     : new Date(parseDate(current.publish).getTime() + 7 * 864e5);
 
   const isRevealed = (issue) => {
-    const idx = issues.indexOf(issue);
-    return idx < issues.length - 1 && parseDate(issues[idx + 1].publish) <= now;
+    const next = issues[issues.indexOf(issue) + 1];
+    return !!next && published.includes(next);
   };
+
+  if (previewIdx >= 0) {
+    document.body.insertAdjacentHTML("afterbegin",
+      `<div class="preview-bar">PREVIEW MODE: showing the site as if released up to "${issues[previewIdx].title}". Readers can't see this.</div>`);
+  }
 
   const state = JSON.parse(localStorage.getItem(STORE_KEY) || '{"bonus":{}}');
   const save = () => localStorage.setItem(STORE_KEY, JSON.stringify(state));
@@ -66,7 +86,7 @@
           <span class="tag">${String(i + 1).padStart(2, "0")} &middot; ${f.tag}</span>
         </div>
         <div class="fact-body">
-          <div class="fact-img">${f.image ? `<img src="${f.image}" alt="${f.tag}">` : window.ICONS[f.tag.toLowerCase()] || window.ICONS.default}</div>
+          <div class="fact-img">${f.image ? `<img src="${f.image}" alt="${f.tag}">` : window.iconFor(f)}</div>
           <p>${f.fact}</p>
         </div>
       </article>`).join("");
@@ -94,7 +114,9 @@
       side = picked === undefined
         ? `<p>Pick your answer and lock it in. The answer will be revealed in next week's issue on <b>${fmtDate(nextRevealDate)}</b>.</p>`
         : `<p class="lock-note">Locked in: ${letters[picked]}. ${b.options[picked]}</p><p>Come back for the reveal in:</p>`;
-      side += `<div class="countdown" id="countdown">${countdownHTML()}</div>`;
+      side += nextRevealDate > new Date()
+        ? `<div class="countdown" id="countdown">${countdownHTML()}</div>`
+        : `<p class="lock-note">The answer drops very soon. Stay tuned!</p>`;
     }
 
     el.innerHTML = `

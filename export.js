@@ -229,7 +229,7 @@
     ]);
     const issue = TriviaApp.getIssue();
     const icons = await Promise.all(issue.facts.slice(0, TriviaApp.MAX_FACTS).map((f) =>
-      loadImage(f.image || svgToUrl(window.ICONS[f.tag.toLowerCase()] || window.ICONS.default))));
+      loadImage(f.image || svgToUrl(window.iconFor(f)))));
     const data = { issue, icons, revealed: TriviaApp.isRevealed(issue), link: bonusLink(issue) };
     const H = draw(document.createElement("canvas").getContext("2d"), data, 0);
     const scale = width / W;

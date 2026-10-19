@@ -23,6 +23,8 @@ h1, h2, h3 { font-family: "Baloo 2", sans-serif; margin: 0; }
 main { max-width: 1100px; margin: 0 auto; padding: 0 20px 40px; }
 .hidden { display: none !important; }
 
+.preview-bar { background: #ffd23f; color: var(--ink); text-align: center; font-weight: 800; font-size: 14px; padding: 8px 16px; }
+
 /* Masthead */
 .masthead {
   position: sticky; top: 0; z-index: 10;
@@ -92,7 +94,116 @@ nav a:hover { color: var(--theme); }
 }
 .fact-img svg { width: 70px; height: 70px; }
 .fact-img img { width: 100%; height: 100%; object-fit: cover; }
-.fact-card:hover .fact-img { transform: scale(1.08) rotate(-4deg); }
+.fact-card:hover .fact-img { transform: scale(1.08); }
+
+/* ---- Hover animations for fun-fact illustrations ---- */
+.ic, .ic * { transform-box: fill-box; transform-origin: center; }
+.fact-card:hover .ic, .fact-card:hover .ic * { animation-iteration-count: infinite; animation-timing-function: ease-in-out; }
+
+/* Whole-illustration motions */
+.fact-card:hover .ic-laughter     { animation: laugh .45s infinite; }
+.fact-card:hover .ic-heart        { animation: heartbeat 1s infinite; }
+.fact-card:hover .ic-walking      { animation: step .6s infinite; }
+.fact-card:hover .ic-hydration    { animation: wobble 1.2s infinite; }
+.fact-card:hover .ic-strength     { animation: lift .9s infinite; }
+.fact-card:hover .ic-sleep        { animation: rock 2s infinite; }
+.fact-card:hover .ic-stretching   { animation: sway 1.4s infinite; transform-origin: 50% 100%; }
+.fact-card:hover .ic-nuts         { animation: wiggle .5s infinite; }
+.fact-card:hover .ic-fruit        { animation: swing 1.2s infinite; transform-origin: 20% 20%; }
+.fact-card:hover .ic-vitamins     { animation: hop .7s infinite; }
+.fact-card:hover .ic-energy       { animation: zap .6s infinite; }
+.fact-card:hover .ic-nature       { animation: sway 2s infinite; transform-origin: 50% 100%; }
+.fact-card:hover .ic-breathing    { animation: breathe 2.4s infinite; }
+.fact-card:hover .ic-focus        { animation: pulse 1s infinite; }
+.fact-card:hover .ic-routine      { animation: ring .35s infinite; }
+.fact-card:hover .ic-avocado      { animation: wiggle .7s infinite; }
+.fact-card:hover .ic-yogurt       { animation: hop 1s infinite; }
+.fact-card:hover .ic-berries      { animation: hop .6s infinite; }
+.fact-card:hover .ic-music        { animation: groove .6s infinite; }
+.fact-card:hover .ic-meditation   { animation: float 2.4s infinite; }
+.fact-card:hover .ic-temperature  { animation: shiver .15s infinite; }
+.fact-card:hover .ic-dreams       { animation: float 2s infinite; }
+.fact-card:hover .ic-memory       { animation: pulse 1.2s infinite; }
+.fact-card:hover .ic-salt         { animation: shake-salt .5s infinite; transform-origin: 50% 20%; }
+.fact-card:hover .ic-fish         { animation: swim .8s infinite; }
+.fact-card:hover .ic-broccoli     { animation: hop .7s infinite; }
+.fact-card:hover .ic-bottle       { animation: slosh .8s infinite; transform-origin: 50% 100%; }
+.fact-card:hover .ic-orange       { animation: roll 1.6s infinite; }
+.fact-card:hover .ic-snowflake    { animation: spin 3s linear infinite; }
+.fact-card:hover .ic-eye          { animation: blink 2s infinite; }
+.fact-card:hover .ic-carrot       { animation: wiggle .6s infinite; }
+.fact-card:hover .ic-gift         { animation: gift-jump .8s infinite; }
+.fact-card:hover .ic-calendar     { animation: hop 1s infinite; }
+.fact-card:hover .ic-default      { animation: glow 1s infinite; }
+
+/* Moving parts */
+.fact-card:hover .ic-laughter path[fill="#5ec5ff"]   { animation: tear .9s infinite; }
+.fact-card:hover .ic-hydration path[fill="#2d8fdf"]  { animation: drip 1.2s infinite; }
+.fact-card:hover .ic-sleep text                      { animation: zfloat 1.8s infinite; }
+.fact-card:hover .ic-sleep text:nth-of-type(2)       { animation-delay: .3s; }
+.fact-card:hover .ic-sleep text:nth-of-type(3)       { animation-delay: .6s; }
+.fact-card:hover .ic-naps text                       { animation: zfloat 1.8s infinite; }
+.fact-card:hover .ic-movement path[stroke="#ef4f5f"] { animation: spin 1.5s linear infinite; transform-origin: 0% 100%; }
+.fact-card:hover .ic-gratitude path[fill="#ef4f5f"],
+.fact-card:hover .ic-friends path[fill="#ef4f5f"]    { animation: heartbeat .9s infinite; }
+.fact-card:hover .ic-screens path[stroke="#2d6cdf"]  { animation: blinkrays .6s infinite; }
+.fact-card:hover .ic-popcorn > g:first-of-type circle { animation: pop .5s infinite; }
+.fact-card:hover .ic-popcorn > g:first-of-type circle:nth-child(2n) { animation-delay: .25s; }
+.fact-card:hover .ic-music path[stroke="#ef4f5f"],
+.fact-card:hover .ic-music circle[fill="#ef4f5f"]    { animation: notes .8s infinite; }
+.fact-card:hover .ic-sunlight circle                 { animation: rise 2s infinite; }
+.fact-card:hover .ic-sunlight > g                    { animation: blinkrays 1s infinite; }
+.fact-card:hover .ic-caffeine path:first-of-type,
+.fact-card:hover .ic-tea path:first-of-type          { animation: steam 1.4s infinite; }
+.fact-card:hover .ic-bath > g,
+.fact-card:hover .ic-soap > g                        { animation: bubbles 1.6s infinite; }
+.fact-card:hover .ic-dreams path[fill="#ffd23f"],
+.fact-card:hover .ic-memory path[fill="#ffd23f"],
+.fact-card:hover .ic-sugar path[fill="#ffd23f"]      { animation: twinkle 1s infinite; }
+.fact-card:hover .ic-calendar path[stroke="#22b573"] { animation: pop .8s infinite; }
+.fact-card:hover .ic-yogurt path[stroke="#8a94a8"],
+.fact-card:hover .ic-yogurt ellipse                  { animation: dip 1s infinite; }
+
+@keyframes laugh { 0%,100% { transform: rotate(0) translateY(0); } 25% { transform: rotate(-9deg) translateY(-3px); } 75% { transform: rotate(9deg) translateY(-3px); } }
+@keyframes tear { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(14px); opacity: 0; } }
+@keyframes heartbeat { 0%,100% { transform: scale(1); } 15% { transform: scale(1.18); } 30% { transform: scale(1); } 45% { transform: scale(1.12); } }
+@keyframes step { 0%,100% { transform: rotate(0) translateY(0); } 50% { transform: rotate(-10deg) translateY(-6px); } }
+@keyframes wobble { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+@keyframes drip { 0% { transform: translateY(-4px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(10px); opacity: 0; } }
+@keyframes lift { 0%,100% { transform: translateY(6px); } 50% { transform: translateY(-8px); } }
+@keyframes rock { 0%,100% { transform: rotate(-10deg); } 50% { transform: rotate(10deg); } }
+@keyframes zfloat { 0% { transform: translate(0, 4px); opacity: 0; } 40% { opacity: 1; } 100% { transform: translate(6px, -10px); opacity: 0; } }
+@keyframes sway { 0%,100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+@keyframes wiggle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-12deg); } 75% { transform: rotate(12deg); } }
+@keyframes swing { 0%,100% { transform: rotate(-10deg); } 50% { transform: rotate(10deg); } }
+@keyframes hop { 0%,100% { transform: translateY(0) scale(1, 1); } 40% { transform: translateY(-9px) scale(.96, 1.04); } 80% { transform: translateY(0) scale(1.05, .95); } }
+@keyframes zap { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: .6; } }
+@keyframes breathe { 0%,100% { transform: scale(.92); } 50% { transform: scale(1.08); } }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+@keyframes ring { 0%,100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+@keyframes groove { 0%,100% { transform: rotate(-6deg) translateY(0); } 50% { transform: rotate(6deg) translateY(-3px); } }
+@keyframes notes { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes float { 0%,100% { transform: translateY(3px); } 50% { transform: translateY(-6px); } }
+@keyframes shiver { 0%,100% { transform: translateX(-1.5px); } 50% { transform: translateX(1.5px); } }
+@keyframes shake-salt { 0%,100% { transform: rotate(150deg); } 50% { transform: rotate(170deg); } }
+@keyframes swim { 0%,100% { transform: translateX(-4px) rotate(-5deg); } 50% { transform: translateX(4px) rotate(5deg); } }
+@keyframes slosh { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(12deg); } }
+@keyframes roll { 0% { transform: translateX(-6px) rotate(0); } 50% { transform: translateX(6px) rotate(180deg); } 100% { transform: translateX(-6px) rotate(360deg); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes blink { 0%,40%,50%,100% { transform: scaleY(1); } 45% { transform: scaleY(.1); } }
+@keyframes gift-jump { 0%,100% { transform: translateY(0) rotate(0); } 30% { transform: translateY(-8px) rotate(-8deg); } 60% { transform: translateY(-4px) rotate(8deg); } }
+@keyframes glow { 0%,100% { filter: drop-shadow(0 0 0 #ffd23f); } 50% { filter: drop-shadow(0 0 8px #ffd23f); } }
+@keyframes blinkrays { 0%,100% { opacity: 1; } 50% { opacity: .2; } }
+@keyframes pop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.3) translateY(-3px); } }
+@keyframes rise { 0%,100% { transform: translateY(6px); } 50% { transform: translateY(-4px); } }
+@keyframes steam { 0% { transform: translateY(4px); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(-8px); opacity: 0; } }
+@keyframes bubbles { 0% { transform: translateY(4px) scale(.9); opacity: .4; } 50% { opacity: 1; } 100% { transform: translateY(-8px) scale(1.05); opacity: .4; } }
+@keyframes twinkle { 0%,100% { transform: scale(1) rotate(0); opacity: 1; } 50% { transform: scale(1.4) rotate(45deg); opacity: .6; } }
+@keyframes dip { 0%,100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fact-card:hover .ic, .fact-card:hover .ic * { animation: none !important; }
+}
 .fact-card p { margin: 0; font-size: 16px; flex: 1; }
 .fact-card p b { color: var(--theme); }
 .options { display: grid; gap: 8px; margin-top: auto; }

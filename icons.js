@@ -1,5 +1,5 @@
-// Flat illustrations for fun facts, keyed by the fact's `tag` (lowercase).
-// Add a new key here when you introduce a new tag in data.js.
+// Flat illustrations for fun facts, keyed by the fact's `icon` (or `tag` if no icon is set), lowercase.
+// Add a new key here when you introduce a new topic in data.js.
 window.ICONS = {
   laughter: `<svg viewBox="0 0 100 100"><circle cx="50" cy="52" r="34" fill="#ffd23f" stroke="#e8a900" stroke-width="3"/>
     <path d="M32 44 q6-8 12 0 M56 44 q6-8 12 0" stroke="#3b2a00" stroke-width="4" fill="none" stroke-linecap="round"/>
@@ -107,7 +107,63 @@ window.ICONS = {
     <g fill="#e7f2ff" stroke="#9cc3ec" stroke-width="2"><circle cx="40" cy="44" r="8"/><circle cx="54" cy="40" r="10"/><circle cx="68" cy="46" r="7"/><circle cx="78" cy="30" r="5"/></g>
     <rect x="8" y="50" width="84" height="8" rx="4" fill="#2d6cdf"/><path d="M14 58 h72 v8 q0 16 -18 16 H32 q-18 0 -18 -16z" fill="#5ec5ff"/>
     <path d="M26 82 l-4 8 M74 82 l4 8" stroke="#2d6cdf" stroke-width="5" stroke-linecap="round"/></svg>`,
+  salt: `<svg viewBox="0 0 100 100"><path d="M34 34 h32 l4 50 q0 6 -6 6 H36 q-6 0 -6 -6z" fill="#fff" stroke="#8a94a8" stroke-width="3"/>
+    <path d="M32 34 q0 -20 18 -20 q18 0 18 20z" fill="#c7d2e3" stroke="#8a94a8" stroke-width="3"/>
+    <circle cx="44" cy="24" r="2" fill="#5d6b8a"/><circle cx="50" cy="20" r="2" fill="#5d6b8a"/><circle cx="56" cy="24" r="2" fill="#5d6b8a"/>
+    <text x="50" y="70" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="18" fill="#ef4f5f">S</text>
+    <circle cx="80" cy="76" r="2.5" fill="#c7d2e3"/><circle cx="86" cy="84" r="2" fill="#c7d2e3"/><circle cx="18" cy="82" r="2.5" fill="#c7d2e3"/></svg>`,
+  fish: `<svg viewBox="0 0 100 100"><path d="M12 50 q24 -30 56 -14 l18 -14 v56 l-18 -14 q-32 16 -56 -14z" fill="#ff8a65" stroke="#e8603a" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M40 34 q8 16 0 32 M52 36 q6 14 0 28" stroke="#e8603a" stroke-width="2.5" fill="none"/>
+    <circle cx="26" cy="46" r="4" fill="#1d2b4f"/><path d="M18 56 q4 2 8 0" stroke="#e8603a" stroke-width="2" fill="none"/></svg>`,
+  broccoli: `<svg viewBox="0 0 100 100"><path d="M42 58 l-6 32 h28 l-6 -32z" fill="#9ccc65" stroke="#689f38" stroke-width="3" stroke-linejoin="round"/>
+    <g fill="#2e7d32"><circle cx="30" cy="44" r="14"/><circle cx="50" cy="32" r="18"/><circle cx="70" cy="44" r="14"/><circle cx="50" cy="52" r="12"/></g>
+    <g fill="#43a047"><circle cx="44" cy="26" r="5"/><circle cx="64" cy="40" r="4"/><circle cx="28" cy="40" r="4"/></g></svg>`,
+  bottle: `<svg viewBox="0 0 100 100"><rect x="40" y="8" width="20" height="12" rx="3" fill="#1d2b4f"/><path d="M38 20 h24 v8 q10 4 10 14 v42 q0 8 -8 8 H36 q-8 0 -8 -8 V42 q0 -10 10 -14z" fill="#e7f2ff" stroke="#2d6cdf" stroke-width="3"/>
+    <path d="M31 54 h38 v30 q0 5 -5 5 H36 q-5 0 -5 -5z" fill="#5ec5ff"/><path d="M38 40 v40" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/></svg>`,
+  soap: `<svg viewBox="0 0 100 100"><rect x="16" y="52" width="60" height="34" rx="12" fill="#ff8fa3" stroke="#e05a78" stroke-width="3"/>
+    <path d="M26 62 q10 -4 20 0" stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none" opacity=".8"/>
+    <g fill="#e7f2ff" stroke="#9cc3ec" stroke-width="2"><circle cx="40" cy="40" r="10"/><circle cx="60" cy="32" r="13"/><circle cx="80" cy="44" r="8"/><circle cx="76" cy="18" r="6"/></g>
+    <path d="M56 26 q3 -3 6 -1" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`,
+  orange: `<svg viewBox="0 0 100 100"><circle cx="50" cy="56" r="34" fill="#ff9800" stroke="#e67e00" stroke-width="3"/>
+    <path d="M50 22 q-2 -8 4 -12" stroke="#6b4a1a" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M54 20 q14 -12 26 -4 q-12 12 -26 4z" fill="#22b573"/>
+    <g fill="#ffb74d"><circle cx="36" cy="46" r="2"/><circle cx="58" cy="40" r="2"/><circle cx="66" cy="62" r="2"/><circle cx="42" cy="70" r="2"/><circle cx="50" cy="56" r="2"/></g>
+    <path d="M30 44 q4 -10 14 -14" stroke="#ffcc80" stroke-width="4" stroke-linecap="round" fill="none"/></svg>`,
+  sugar: `<svg viewBox="0 0 100 100"><path d="M20 40 l26 -12 l30 10 v32 l-28 14 l-28 -12z" fill="#fff" stroke="#c7d2e3" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M20 40 l28 12 l28 -14 M48 52 v32" stroke="#c7d2e3" stroke-width="3" fill="none"/>
+    <g fill="#e3ecf3"><circle cx="30" cy="56" r="2"/><circle cx="38" cy="66" r="2"/><circle cx="60" cy="62" r="2"/><circle cx="66" cy="54" r="2"/><circle cx="46" cy="38" r="2"/></g>
+    <path d="M70 18 l2 6 l6 2 l-6 2 l-2 6 l-2 -6 l-6 -2 l6 -2z" fill="#ffd23f"/><circle cx="20" cy="20" r="3" fill="#ef4f5f"/></svg>`,
+  tea: `<svg viewBox="0 0 100 100"><path d="M40 28 q-6 -8 0 -16 M54 28 q-6 -8 0 -16" stroke="#c7d2e3" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M16 36 h60 v20 q0 26 -30 26 q-30 0 -30 -26z" fill="#22b573"/><path d="M76 42 h4 q10 0 10 10 q0 10 -10 10 h-6" stroke="#22b573" stroke-width="6" fill="none"/>
+    <ellipse cx="46" cy="36" rx="30" ry="5" fill="#c58b3c"/><path d="M58 36 v14" stroke="#fff" stroke-width="2"/><rect x="54" y="50" width="9" height="11" rx="1" fill="#fff6dd" stroke="#e8a900" stroke-width="1.5"/>
+    <path d="M10 88 h72" stroke="#c7d2e3" stroke-width="5" stroke-linecap="round"/></svg>`,
+  snowflake: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="42" fill="#e7f2ff"/>
+    <g stroke="#2d8fdf" stroke-width="5" stroke-linecap="round" fill="none">
+      <path d="M50 14 v72 M19 32 l62 36 M19 68 l62 -36"/>
+      <path d="M42 20 l8 8 l8 -8 M42 80 l8 -8 l8 8 M20 42 l11 -3 l-3 -11 M80 58 l-11 3 l3 11 M20 58 l11 3 l-3 11 M80 42 l-11 -3 l3 -11"/>
+    </g></svg>`,
+  eye: `<svg viewBox="0 0 100 100"><path d="M8 50 q42 -44 84 0 q-42 44 -84 0z" fill="#fff" stroke="#1d2b4f" stroke-width="4" stroke-linejoin="round"/>
+    <circle cx="50" cy="50" r="16" fill="#2d8fdf"/><circle cx="50" cy="50" r="7" fill="#1d2b4f"/><circle cx="55" cy="45" r="3.5" fill="#fff"/>
+    <path d="M70 76 q-5 8 0 12 q5 -4 0 -12z" fill="#5ec5ff"/></svg>`,
+  carrot: `<svg viewBox="0 0 100 100"><path d="M30 34 q14 -10 28 4 q6 6 2 14 L22 92 q-4 2 -4 -2z" fill="#ff8a3d" stroke="#e8603a" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M36 50 l8 4 M30 62 l8 4 M26 74 l6 3" stroke="#e8603a" stroke-width="3" stroke-linecap="round"/>
+    <path d="M52 32 q0 -18 10 -24 q2 14 -6 26 M56 36 q10 -14 24 -14 q-6 14 -20 18 M54 34 q18 -2 28 8 q-14 6 -26 -2" fill="#22b573"/></svg>`,
+  gift: `<svg viewBox="0 0 100 100"><rect x="16" y="42" width="68" height="46" rx="5" fill="#ef4f5f"/><rect x="12" y="32" width="76" height="16" rx="4" fill="#ff6b7a"/>
+    <rect x="44" y="32" width="12" height="56" fill="#ffd23f"/>
+    <path d="M50 32 q-18 -22 -26 -10 q-4 10 26 10z M50 32 q18 -22 26 -10 q4 10 -26 10z" fill="#ffd23f" stroke="#e8a900" stroke-width="2"/></svg>`,
+  calendar: `<svg viewBox="0 0 100 100"><rect x="14" y="20" width="72" height="68" rx="10" fill="#fff" stroke="#1d2b4f" stroke-width="4"/>
+    <path d="M14 30 q0 -10 10 -10 h52 q10 0 10 10 v10 H14z" fill="#ef4f5f"/><path d="M32 12 v16 M68 12 v16" stroke="#1d2b4f" stroke-width="5" stroke-linecap="round"/>
+    <g fill="#c7d2e3"><rect x="24" y="48" width="10" height="10" rx="2"/><rect x="45" y="48" width="10" height="10" rx="2"/><rect x="24" y="66" width="10" height="10" rx="2"/></g>
+    <path d="M64 70 l6 6 l12 -14" stroke="#22b573" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M45 66 l10 10 M55 66 l-10 10 M66 48 l8 8 M74 48 l-8 8" stroke="#22b573" stroke-width="3" stroke-linecap="round"/></svg>`,
   default: `<svg viewBox="0 0 100 100"><path d="M50 12 a26 26 0 0 0 -16 46 q4 4 4 10 h24 q0 -6 4 -10 a26 26 0 0 0 -16 -46z" fill="#ffd23f" stroke="#e8a900" stroke-width="3"/>
     <rect x="38" y="72" width="24" height="6" rx="2" fill="#8a94a8"/><rect x="40" y="80" width="20" height="6" rx="2" fill="#8a94a8"/>
     <path d="M44 50 l6 -10 l6 10" stroke="#e8a900" stroke-width="3" fill="none"/></svg>`
+};
+
+// Returns the SVG with an "ic-<name>" class so styles.css can animate it on hover
+window.iconFor = (f) => {
+  const key = (f.icon || f.tag).toLowerCase();
+  const name = window.ICONS[key] ? key : "default";
+  return window.ICONS[name].replace("<svg", `<svg class="ic ic-${name}"`);
 };
