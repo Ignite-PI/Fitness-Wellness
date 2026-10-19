@@ -92,6 +92,24 @@
     ctx.fillRect(0, 0, W, H);
     let y = P;
 
+    // Logo strip (only drawn when the logo files exist in images/)
+    const { fit, ct } = d.logos;
+    if (fit || ct) {
+      const stripH = 64;
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.roundRect(P, y, W - 2 * P, stripH, 16); ctx.fill();
+      const fitDraw = (img, x, h, alignRight) => {
+        const w = (img.naturalWidth / img.naturalHeight) * h;
+        ctx.drawImage(img, alignRight ? x - w : x, y + (stripH - h) / 2, w, h);
+      };
+      if (fit) fitDraw(fit, P + 14, 52, false);
+      if (ct) fitDraw(ct, W - P - 14, 48, true);
+      ctx.font = font(800, 11); ctx.fillStyle = MUTED; ctx.textAlign = "center";
+      ctx.fillText("PRESENTS", W / 2, y + stripH / 2 - 6);
+      ctx.textAlign = "left";
+      y += stripH + 12;
+    }
+
     // Header
     const titleBlock = wrap(ctx, issue.title + " Trivia", W - 2 * P - 40, 40, "Baloo 2", [800, 800]);
     const headH = 26 + 16 + 6 + titleBlock.lines.length * 42 + 10 + 30 + 22;
@@ -230,7 +248,8 @@
     const issue = TriviaApp.getIssue();
     const icons = await Promise.all(issue.facts.slice(0, TriviaApp.MAX_FACTS).map((f) =>
       loadImage(f.image || svgToUrl(window.iconFor(f)))));
-    const data = { issue, icons, revealed: TriviaApp.isRevealed(issue), link: bonusLink(issue) };
+    const [fit, ct] = await Promise.all([loadImage("images/fit-logo.png"), loadImage("images/clinical-tower-logo.png")]);
+    const data = { issue, icons, revealed: TriviaApp.isRevealed(issue), link: bonusLink(issue), logos: { fit, ct } };
     const H = draw(document.createElement("canvas").getContext("2d"), data, 0);
     const scale = width / W;
     const canvas = document.createElement("canvas");
