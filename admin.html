@@ -37,6 +37,42 @@
     .chip.next { background: #ffd23f; color: var(--ink); }
     .chip.sched { background: #eef1f7; color: var(--muted); }
     .month { font-family: "Baloo 2"; font-size: 22px; margin: 18px 0 -2px; }
+    .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-left: auto; align-items: center; }
+    .hero-card .btn.ghost { background: transparent; color: #fff; border-color: #fff; }
+    .row .actions .btn.icon { width: 36px; padding: 7px 0; text-align: center; font-size: 16px; line-height: 1; }
+    .add-issue { margin-top: 10px; border-style: dashed; padding: 14px; font-size: 16px; }
+    .add-issue:hover { background: #fff; border-color: #22b573; color: #22b573; }
+
+    /* Editor */
+    .edit-dlg { width: min(900px, 96vw); max-height: 92vh; padding: 0; border: 0; border-radius: 22px; color: var(--ink); box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+    .edit-dlg::backdrop { background: rgba(29,43,79,.55); backdrop-filter: blur(3px); }
+    .edit-dlg form { display: flex; flex-direction: column; max-height: 92vh; }
+    .ed-head, .ed-foot { display: flex; align-items: center; gap: 10px; padding: 14px 22px; border-bottom: 1px solid #e3ecf3; }
+    .ed-foot { border-bottom: 0; border-top: 1px solid #e3ecf3; justify-content: flex-end; }
+    .ed-head h3 { font-size: 22px; margin-right: auto; }
+    .ed-body { overflow: auto; padding: 18px 22px; }
+    .ed-body h4 { font-family: "Baloo 2"; font-size: 19px; margin: 20px 0 8px; }
+    .ed-body h4:first-child { margin-top: 0; }
+    .ed-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .ed-grid .full { grid-column: 1 / -1; }
+    .ed-body label { display: block; font-weight: 800; font-size: 13px; }
+    .ed-body input, .ed-body select, .ed-body textarea { width: 100%; font: inherit; font-size: 14px; padding: 8px 10px; border-radius: 10px; border: 2px solid rgba(29,43,79,.15); margin-top: 4px; background: #fff; }
+    .ed-body input[type=color] { height: 40px; padding: 2px; }
+    .ed-body input:disabled { background: #eef1f7; color: var(--muted); }
+    .ed-body textarea { resize: vertical; }
+    .ed-hint { font-size: 12.5px; color: var(--muted); margin: 0 0 8px; }
+    .fact-row { display: grid; grid-template-columns: 26px 56px 1fr; gap: 10px; align-items: center; padding: 10px; border-radius: 14px; background: #f5f8fc; margin-bottom: 8px; }
+    .fr-num { font-family: "Baloo 2"; font-weight: 800; color: var(--muted); }
+    .fr-icon { width: 56px; height: 56px; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+    .fr-icon svg { width: 44px; height: 44px; }
+    .fr-top { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .fr-top input, .fr-top select { margin-top: 0; }
+    .opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .opt-grid label { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+    .opt-grid input[type=radio] { width: auto; margin: 0; accent-color: #22b573; }
+    .opt-grid input[type=text] { margin: 0; }
+    .rel-note { background: #fff6dd; border-left: 4px solid #ffd23f; padding: 8px 12px; border-radius: 8px; font-size: 13px; margin: 0 0 14px; }
+    @media (max-width: 640px) { .ed-grid, .fr-top, .opt-grid { grid-template-columns: 1fr; } .fact-row { grid-template-columns: 1fr; } }
     @media (max-width: 640px) { .row { grid-template-columns: 8px 1fr; } .row .actions { grid-column: 2; justify-content: flex-start; } }
   </style>
 </head>
@@ -71,9 +107,55 @@
     </section>
   </main>
 
+  <dialog id="editDlg" class="edit-dlg">
+    <form id="editForm" novalidate>
+      <div class="ed-head">
+        <h3 id="edTitleBar">Edit issue</h3>
+        <button type="button" id="edClose" class="exp-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="ed-body">
+        <p id="edReleasedNote" class="rel-note hidden">This issue is already released. Changes will show to readers right away. The date can't be changed.</p>
+
+        <h4>Issue details</h4>
+        <div class="ed-grid">
+          <label class="full">Title<input name="etitle" required maxlength="60" placeholder="e.g. Heart Health" /></label>
+          <label>Subtitle<input name="esub" maxlength="60" placeholder="e.g. Love Your Heart!" /></label>
+          <label>Planned date<input name="edate" type="date" required /></label>
+          <label>Theme color<input name="etheme" type="color" /></label>
+          <label>Quote<input name="equote" maxlength="160" placeholder="Inspirational quote" /></label>
+        </div>
+
+        <h4>Fun facts (up to 8)</h4>
+        <p class="ed-hint">The picture is chosen automatically from the topic, or pick one from the list. Wrap words in <code>&lt;b&gt;...&lt;/b&gt;</code> to highlight them.</p>
+        <div id="edFacts"></div>
+
+        <h4>Bonus Trivia</h4>
+        <div class="ed-grid">
+          <label class="full">Question<input name="bq" required maxlength="160" /></label>
+          <div class="full">
+            <p class="ed-hint" style="margin:0 0 6px"><b>Choices:</b> select the circle next to the correct answer.</p>
+            <div class="opt-grid">
+              <label><input type="radio" name="banswer" value="0" /> A <input type="text" name="bo0" required maxlength="40" /></label>
+              <label><input type="radio" name="banswer" value="1" /> B <input type="text" name="bo1" required maxlength="40" /></label>
+              <label><input type="radio" name="banswer" value="2" /> C <input type="text" name="bo2" required maxlength="40" /></label>
+              <label><input type="radio" name="banswer" value="3" /> D <input type="text" name="bo3" required maxlength="40" /></label>
+            </div>
+          </div>
+          <label class="full">Explanation (shown when the answer is revealed)<input name="bexplain" maxlength="200" /></label>
+        </div>
+      </div>
+      <div class="ed-foot">
+        <p id="edErr" class="err" style="margin-right:auto"></p>
+        <button type="button" class="btn" id="edCancel">Cancel</button>
+        <button type="submit" class="btn primary" id="edSave">Save</button>
+      </div>
+    </form>
+  </dialog>
+
   <div id="toast" class="toast"></div>
 
   <script src="data.js"></script>
+  <script src="icons.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>
