@@ -3,6 +3,7 @@
   const $ = (id) => document.getElementById(id);
   const letters = ["A", "B", "C", "D"];
   const MAX_FACTS = 8;
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   const parseDate = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
   const fmtDate = (d) => d.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
@@ -98,11 +99,39 @@
     return [[d, "days"], [h, "hrs"], [m, "min"], [s, "sec"]].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join("");
   }
 
+  // Bonus answers go to Microsoft Forms (config.js FORMS_URL), Power Automate (SUBMIT_URL)
+  // or, when testing locally, to server.py
+  const NAME_KEY = "weekly-trivia-name";
+  const formsUrl = window.FORMS_URL || "";
+  const submitUrl = formsUrl ? "" : window.SUBMIT_URL || (location.hostname.endsWith(".github.io") ? "" : "api/answers");
+
+  // Fills the Forms pre-filled link: "ISSUE" becomes the issue ID and the "A" choice becomes the picked letter
+  function formLink(issue, answer) {
+    const url = new URL(formsUrl);
+    for (const [k, v] of [...url.searchParams]) {
+      if (v.includes("ISSUE")) url.searchParams.set(k, v.replace("ISSUE", issue));
+      else if (/^"?A"?$/.test(v)) url.searchParams.set(k, v.replace("A", letters[answer]));
+    }
+    return url.toString();
+  }
+
+  async function sendAnswer(issue, name, answer) {
+    if (!submitUrl) return;
+    // text/plain keeps this a "simple" request, so no CORS preflight is needed
+    const res = await fetch(submitUrl, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ issue, name, answer })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  }
+
   function renderBonus() {
     const b = viewing.bonus;
     const picked = state.bonus[viewing.id];
     const revealed = isRevealed(viewing);
     const el = $("bonus");
+    const askName = !!submitUrl && !revealed && picked === undefined;
     clearInterval(timer);
 
     let side;
@@ -113,7 +142,9 @@
     } else {
       side = picked === undefined
         ? `<p>Pick your answer and lock it in. The answer will be revealed in next week's issue on <b>${fmtDate(nextRevealDate)}</b>.</p>`
-        : `<p class="lock-note">Locked in: ${letters[picked]}. ${b.options[picked]}</p><p>Come back for the reveal in:</p>`;
+        : `<p class="lock-note">Locked in: ${letters[picked]}. ${b.options[picked]}${state.names?.[viewing.id] ? ` (as ${esc(state.names[viewing.id])})` : ""}</p>` +
+          (formsUrl ? `<p class="forms-note">Make sure you clicked <b>Submit</b> in Microsoft Forms. <a href="${esc(formLink(viewing.id, picked))}" target="_blank" rel="noopener">Open the form again</a></p>` : "") +
+          `<p>Come back for the reveal in:</p>`;
       side += nextRevealDate > new Date()
         ? `<div class="countdown" id="countdown">${countdownHTML()}</div>`
         : `<p class="lock-note">The answer drops very soon. Stay tuned!</p>`;
@@ -124,6 +155,7 @@
         <span class="bonus-head">BONUS TRIVIA</span>
         <h3>${b.q}</h3>
         <p>Worth 3 points &middot; ${revealed ? "Answer revealed" : "Answer revealed next week"}</p>
+        ${askName ? `<label class="name-field">Your name<input id="bonusName" maxlength="60" placeholder="First and last name" autocomplete="name" /></label>` : ""}
         <div class="options" style="margin-top:16px">
           ${b.options.map((o, j) => {
             let cls = "";
@@ -136,10 +168,37 @@
       </div>
       <div>${side}</div>`;
 
-    el.querySelectorAll(".opt").forEach((btn) => btn.addEventListener("click", () => {
+    const nameInput = $("bonusName");
+    if (nameInput) nameInput.value = localStorage.getItem(NAME_KEY) || "";
+
+    el.querySelectorAll(".opt").forEach((btn) => btn.addEventListener("click", async () => {
       const j = Number(btn.dataset.j);
-      if (!confirm(`Lock in "${b.options[j]}"? You can't change it until the reveal.`)) return;
-      state.bonus[viewing.id] = j;
+      const name = nameInput?.value.trim().replace(/\s+/g, " ") || "";
+      if (nameInput && !name) {
+        toast("Please enter your name first.");
+        return nameInput.focus();
+      }
+      const issueId = viewing.id;
+      if (formsUrl) {
+        if (!confirm(`Lock in "${b.options[j]}"?\n\nMicrosoft Forms will open with your answer filled in. Click Submit there to send it.`)) return;
+        window.open(formLink(issueId, j), "_blank", "noopener");
+        state.bonus[issueId] = j;
+        save();
+        toast("Almost done! Click Submit in Microsoft Forms to send your answer.");
+        return renderBonus();
+      }
+      if (!confirm(`Lock in "${b.options[j]}"${name ? ` as ${name}` : ""}? You can't change it until the reveal.`)) return;
+      el.querySelectorAll(".opt").forEach((o) => (o.disabled = true));
+      try {
+        await sendAnswer(issueId, name, j);
+      } catch (e) {
+        console.warn("Sending answer failed:", e);
+        el.querySelectorAll(".opt").forEach((o) => (o.disabled = false));
+        return toast("Couldn't send your answer. Please check your connection and try again.");
+      }
+      if (name) localStorage.setItem(NAME_KEY, name);
+      state.bonus[issueId] = j;
+      (state.names ||= {})[issueId] = name;
       save();
       toast("Answer locked in! See you next week for the reveal.");
       renderBonus();

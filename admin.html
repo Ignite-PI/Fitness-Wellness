@@ -7,7 +7,7 @@
   <title>Admin | The Weekly Trivia</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261019" />
+  <link rel="stylesheet" href="styles.css?v=20261022" />
   <style>
     .admin { max-width: 980px; margin: 0 auto; padding: 24px 20px 60px; }
     .login { max-width: 380px; margin: 60px auto; background: #fff; padding: 28px; border-radius: 22px; box-shadow: 0 10px 30px rgba(29,43,79,.1); }
@@ -42,6 +42,35 @@
     .row .actions .btn.icon { width: 36px; padding: 7px 0; text-align: center; font-size: 16px; line-height: 1; }
     .add-issue { margin-top: 10px; border-style: dashed; padding: 14px; font-size: 16px; }
     .add-issue:hover { background: #fff; border-color: #22b573; color: #22b573; }
+
+    /* Results */
+    .ok { color: #16955f; }
+    .bad { color: #e0435a; }
+    .res-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; padding: 14px 18px; background: #fff; border-radius: 16px; box-shadow: 0 4px 14px rgba(29,43,79,.06); font-size: 14px; }
+    .res-top > div:first-child { flex: 1; min-width: 240px; }
+    .res-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .res-actions .btn { padding: 7px 12px; font-size: 14px; }
+    .btn.res { border-color: #2d6cdf; color: #2d6cdf; }
+    .stats { display: flex; gap: 12px; margin-top: 4px; font-size: 13px; font-weight: 800; color: var(--ink); }
+    .chip.wrong { background: #ffe9ee; color: #e0435a; margin: 0; }
+    .res-table .chip { margin: 0; }
+    .res-q { font-family: "Baloo 2"; font-size: 20px; margin: 0 0 14px; }
+    .res-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .res-cards div { background: #f5f8fc; border-radius: 14px; padding: 14px; text-align: center; }
+    .res-cards b { display: block; font-family: "Baloo 2"; font-size: 34px; line-height: 1; }
+    .res-cards span { font-size: 13px; font-weight: 800; color: var(--muted); }
+    .res-cards .ok b { color: #16955f; } .res-cards .bad b { color: #e0435a; }
+    .res-bars { display: grid; gap: 8px; margin: 18px 0; }
+    .res-bar { display: grid; grid-template-columns: 200px 1fr 40px; gap: 10px; align-items: center; font-weight: 700; font-size: 14px; }
+    .res-bar .track { height: 14px; background: #eef1f7; border-radius: 99px; overflow: hidden; }
+    .res-bar .track span { display: block; height: 100%; background: #9aa6bf; border-radius: 99px; }
+    .res-bar.right .track span { background: #22b573; }
+    .res-bar.right .lbl { color: #16955f; }
+    .res-bar .num { text-align: right; font-weight: 800; }
+    .res-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .res-table th { text-align: left; color: var(--muted); font-size: 12px; text-transform: uppercase; padding: 8px; border-bottom: 2px solid #e3ecf3; }
+    .res-table td { padding: 8px; border-bottom: 1px solid #eef1f7; }
+    @media (max-width: 640px) { .res-bar { grid-template-columns: 1fr 40px; } .res-bar .track { grid-column: 1 / -1; grid-row: 2; } }
 
     /* Editor */
     .edit-dlg { width: min(900px, 96vw); max-height: 92vh; padding: 0; border: 0; border-radius: 22px; color: var(--ink); box-shadow: 0 20px 60px rgba(0,0,0,.3); }
@@ -103,6 +132,7 @@
 
     <section id="panel" class="hidden">
       <div id="hero" class="hero-card"></div>
+      <div id="resBar" class="res-top"></div>
       <div id="list" class="list"></div>
     </section>
   </main>
@@ -152,10 +182,25 @@
     </form>
   </dialog>
 
+  <dialog id="resDlg" class="edit-dlg">
+    <form method="dialog">
+      <div class="ed-head">
+        <h3 id="resTitle">Results</h3>
+        <button class="exp-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="ed-body" id="resBody"></div>
+      <div class="ed-foot">
+        <button type="button" class="btn" id="resRefresh">Refresh</button>
+        <button type="button" class="btn" id="resCsv">Download CSV</button>
+        <button class="btn primary">Close</button>
+      </div>
+    </form>
+  </dialog>
+
   <div id="toast" class="toast"></div>
 
-  <script src="data.js?v=20261019"></script>
-  <script src="icons.js?v=20261019"></script>
-  <script src="admin.js?v=20261019"></script>
+  <script src="data.js?v=20261022"></script>
+  <script src="icons.js?v=20261022"></script>
+  <script src="admin.js?v=20261022"></script>
 </body>
 </html>

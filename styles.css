@@ -242,6 +242,14 @@ nav a:hover { color: var(--theme); }
 .bonus h3 { font-size: 24px; margin-top: 12px; }
 .bonus p { color: var(--muted); margin: 6px 0 0; }
 .bonus .options { grid-template-columns: 1fr 1fr; }
+.forms-note { font-size: 14px; background: #fff6dd; border-left: 4px solid #ffd23f; padding: 8px 10px; border-radius: 8px; }
+.forms-note a { color: var(--theme); font-weight: 800; }
+.name-field { display: block; margin-top: 14px; font-weight: 800; font-size: 14px; }
+.name-field input {
+  display: block; width: 100%; margin-top: 6px; font: inherit; font-weight: 700; padding: 9px 12px;
+  border-radius: 12px; border: 2px solid rgba(29,43,79,.15);
+}
+.name-field input:focus { outline: none; border-color: var(--theme); }
 .bonus .opt.picked { background: var(--ink); color: #fff; border-color: var(--ink); }
 .lock-note { grid-column: 1 / -1; margin: 0; font-weight: 700; color: var(--theme) !important; }
 .countdown { display: flex; gap: 10px; margin-top: 14px; }

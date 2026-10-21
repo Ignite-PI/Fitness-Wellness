@@ -14,6 +14,9 @@
   let siteUrl = window.SITE_URL || "";
   let tips = window.TIPS || [];
   let released = [];
+  let answers = null; // all submitted bonus answers, or null when results aren't set up
+  let answersError = "";
+  const RES_KEY = "trivia-results-url";
 
   function toast(msg) {
     const t = $("toast");
@@ -135,6 +138,181 @@ window.TIPS = ${JSON.stringify(tips)};
     $("pw").placeholder = "GitHub token (github_pat_...)";
   }
 
+  // ---------- Results (bonus answers) ----------
+  // Accepts rows from server.py ({issue,name,answer,time}), a SharePoint list ({IssueId,Title,Answer,Created})
+  // or an Excel table in SharePoint ({IssueId,Name,Answer,Time}) returned by Power Automate
+  const normalize = (rows) => rows.map((r) => ({
+    issue: String(r.issue ?? r.IssueId ?? "").trim(),
+    name: String(r.name ?? r.Name ?? r.Title ?? "").trim().replace(/\s+/g, " "),
+    answer: r.answer ?? r.Answer ?? "",
+    time: r.time ?? r.Time ?? r.Created ?? ""
+  })).map((r) => ({ ...r, answer: r.answer === "" ? NaN : Number(r.answer) }))
+    .filter((r) => r.issue && r.name && r.answer >= 0 && r.answer <= 3);
+
+  // ---- Import from a Microsoft Forms / Excel export (.xlsx) or CSV ----
+  const IMPORT_KEY = "trivia-imported-answers";
+  const colIndex = (ref) => [...ref.match(/^[A-Z]+/)[0]].reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0) - 1;
+
+  // Minimal .xlsx reader: unzips the workbook with the browser's DecompressionStream and reads the first sheet
+  async function readXlsx(buf) {
+    const dv = new DataView(buf), u8 = new Uint8Array(buf), dec = new TextDecoder();
+    let e = u8.length - 22;
+    while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+    if (e < 0) throw new Error("This doesn't look like an Excel (.xlsx) file.");
+    const files = {};
+    for (let i = 0, p = dv.getUint32(e + 16, true); i < dv.getUint16(e + 10, true); i++) {
+      const nlen = dv.getUint16(p + 28, true);
+      files[dec.decode(u8.subarray(p + 46, p + 46 + nlen))] = { method: dv.getUint16(p + 10, true), size: dv.getUint32(p + 20, true), off: dv.getUint32(p + 42, true) };
+      p += 46 + nlen + dv.getUint16(p + 30, true) + dv.getUint16(p + 32, true);
+    }
+    const read = async (name) => {
+      const f = files[name];
+      if (!f) return null;
+      const start = f.off + 30 + dv.getUint16(f.off + 26, true) + dv.getUint16(f.off + 28, true);
+      const data = u8.subarray(start, start + f.size);
+      if (f.method === 0) return dec.decode(data);
+      return new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).text();
+    };
+    const xml = (t) => new DOMParser().parseFromString(t, "application/xml");
+    const ss = await read("xl/sharedStrings.xml");
+    const strings = ss ? [...xml(ss).getElementsByTagName("si")].map((si) => [...si.getElementsByTagName("t")].map((t) => t.textContent).join("")) : [];
+    const sheet = Object.keys(files).filter((n) => /^xl\/worksheets\/sheet\d+\.xml$/.test(n)).sort()[0];
+    if (!sheet) throw new Error("No worksheet found in this file.");
+    return [...xml(await read(sheet)).getElementsByTagName("row")].map((r) => {
+      const row = [];
+      for (const c of r.getElementsByTagName("c")) {
+        const v = c.getElementsByTagName("v")[0]?.textContent ?? "";
+        const t = c.getAttribute("t");
+        row[colIndex(c.getAttribute("r"))] = t === "s" ? strings[+v] : t === "inlineStr" ? c.textContent : v;
+      }
+      return row;
+    });
+  }
+
+  function readCsv(text) {
+    const rows = [[]];
+    let cur = "", q = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (q) {
+        if (ch === '"' && text[i + 1] === '"') { cur += '"'; i++; } else if (ch === '"') q = false; else cur += ch;
+      } else if (ch === '"') q = true;
+      else if (ch === ",") { rows[rows.length - 1].push(cur); cur = ""; }
+      else if (ch === "\n") { rows[rows.length - 1].push(cur.replace(/\r$/, "")); rows.push([]); cur = ""; }
+      else cur += ch;
+    }
+    rows[rows.length - 1].push(cur);
+    return rows.filter((r) => r.some((c) => c !== ""));
+  }
+
+  // Maps spreadsheet columns (Forms: "Name", "Email", "Completion time", "Issue", "Your answer") to answer rows
+  function rowsToAnswers(rows) {
+    const head = (rows[0] || []).map((h) => String(h ?? "").trim().toLowerCase());
+    const find = (...tests) => { for (const t of tests) { const i = head.findIndex(t); if (i >= 0) return i; } return -1; };
+    const iIssue = find((h) => h.includes("issue"));
+    const iAns = find((h) => h.includes("answer") || h.includes("sagot"));
+    const iName = find((h) => h === "name", (h) => h.includes("name"));
+    const iEmail = find((h) => h.includes("email"));
+    const iTime = find((h) => h.includes("completion"), (h) => h === "time", (h) => h.includes("start"));
+    if (iIssue < 0 || iAns < 0 || (iName < 0 && iEmail < 0)) throw new Error("Couldn't find the Issue, Answer and Name columns in this file.");
+    return rows.slice(1).map((r) => {
+      const raw = String(r[iAns] ?? "").trim();
+      const letter = "ABCD".indexOf(raw.charAt(0).toUpperCase());
+      const t = r[iTime];
+      const time = t && /^\d+(\.\d+)?$/.test(String(t)) ? new Date(Math.round((Number(t) - 25569) * 864e5)).toISOString() : t || "";
+      const name = String(r[iName] ?? "").trim();
+      return { issue: r[iIssue], name: name && name.toLowerCase() !== "anonymous" ? name : r[iEmail] ?? "", answer: /^[0-3]$/.test(raw) ? Number(raw) : letter, time };
+    });
+  }
+
+  async function importFile(file) {
+    try {
+      const rows = /\.csv$/i.test(file.name) ? readCsv(await file.text()) : await readXlsx(await file.arrayBuffer());
+      const list = normalize(rowsToAnswers(rows));
+      localStorage.setItem(IMPORT_KEY, JSON.stringify({ at: new Date().toISOString(), file: file.name, answers: list }));
+      await loadAnswers();
+      render();
+      toast(`Imported ${list.length} answers from ${file.name}.`);
+    } catch (e) {
+      toast(e.message);
+    }
+  }
+
+  async function loadAnswers() {
+    answersError = "";
+    try {
+      const url = localStorage.getItem(RES_KEY);
+      const imported = JSON.parse(localStorage.getItem(IMPORT_KEY) || "null");
+      if (imported) {
+        answers = normalize(imported.answers);
+      } else if (url) {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Results link returned HTTP ${res.status}`);
+        const d = await res.json();
+        answers = normalize(Array.isArray(d) ? d : d.value || d.items || d.answers || []);
+      } else if (!ghRepo) {
+        answers = normalize((await localBackend.call({ answers: true })).answers || []);
+      } else {
+        answers = null;
+      }
+    } catch (e) {
+      answers = null;
+      answersError = e.message;
+    }
+  }
+
+  // One answer per person per issue (first submission counts), names matched case-insensitively
+  function statsFor(issue) {
+    const seen = new Map();
+    (answers || []).filter((a) => a.issue === issue.id)
+      .sort((a, b) => String(a.time).localeCompare(String(b.time)))
+      .forEach((a) => { const k = a.name.toLowerCase(); if (!seen.has(k)) seen.set(k, a); });
+    const people = [...seen.values()];
+    const correct = people.filter((p) => p.answer === issue.bonus.answer).length;
+    const byOption = [0, 1, 2, 3].map((j) => people.filter((p) => p.answer === j).length);
+    return { people, total: people.length, correct, wrong: people.length - correct, byOption };
+  }
+
+  const fmtTime = (t) => { const d = new Date(t); return isNaN(d) ? "" : d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); };
+
+  function openResults(issue) {
+    const s = statsFor(issue);
+    const pct = (n) => (s.total ? Math.round((n / s.total) * 100) : 0);
+    $("resTitle").textContent = `Results: ${issue.title}`;
+    $("resBody").innerHTML = `
+      <p class="res-q">${esc(issue.bonus.q)}</p>
+      <div class="res-cards">
+        <div><b>${s.total}</b><span>Participants</span></div>
+        <div class="ok"><b>${s.correct}</b><span>Correct (${pct(s.correct)}%)</span></div>
+        <div class="bad"><b>${s.wrong}</b><span>Wrong (${pct(s.wrong)}%)</span></div>
+      </div>
+      <div class="res-bars">
+        ${issue.bonus.options.map((o, j) => `<div class="res-bar ${j === issue.bonus.answer ? "right" : ""}">
+          <span class="lbl">${letters[j]}. ${esc(o)}${j === issue.bonus.answer ? " (correct)" : ""}</span>
+          <span class="track"><span style="width:${pct(s.byOption[j])}%"></span></span>
+          <span class="num">${s.byOption[j]}</span>
+        </div>`).join("")}
+      </div>
+      ${s.total ? `<table class="res-table">
+        <thead><tr><th>#</th><th>Name</th><th>Answer</th><th>Result</th><th>Time</th></tr></thead>
+        <tbody>${s.people.map((p, i) => `<tr>
+          <td>${i + 1}</td><td>${esc(p.name)}</td><td>${letters[p.answer]}. ${esc(issue.bonus.options[p.answer])}</td>
+          <td>${p.answer === issue.bonus.answer ? '<span class="chip live">Correct</span>' : '<span class="chip wrong">Wrong</span>'}</td>
+          <td>${fmtTime(p.time)}</td></tr>`).join("")}</tbody>
+      </table>` : `<p class="ed-hint" style="text-align:center;margin:20px 0">No answers yet.</p>`}`;
+    $("resCsv").onclick = () => {
+      const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
+      const csv = ["Name,Answer,Result,Time", ...s.people.map((p) =>
+        [p.name, `${letters[p.answer]}. ${issue.bonus.options[p.answer]}`, p.answer === issue.bonus.answer ? "Correct" : "Wrong", p.time].map(q).join(","))].join("\r\n");
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv" }));
+      a.download = `bonus-results-${issue.id}.csv`;
+      a.click();
+    };
+    $("resRefresh").onclick = async () => { await loadAnswers(); render(); openResults(issue); };
+    if (!$("resDlg").open) $("resDlg").showModal();
+  }
+
   // ---------- Saving ----------
   // Releases always go in order so each new issue reveals the previous bonus answer
   async function setReleased(list, msg) {
@@ -193,6 +371,32 @@ window.TIPS = ${JSON.stringify(tips)};
       </div>`
       : `<div style="flex:1"><h2>All issues are released</h2><p>Click "+ Add new issue" below to schedule more.</p></div>`;
 
+    const resUrl = localStorage.getItem(RES_KEY);
+    const imported = JSON.parse(localStorage.getItem(IMPORT_KEY) || "null");
+    const liveStats = live && answers ? statsFor(live) : null;
+    const source = imported ? `Imported from <b>${esc(imported.file)}</b> (${fmtTime(imported.at)})`
+      : resUrl ? "Connected to Power Automate" : "Local test server";
+    $("resBar").innerHTML = `
+      <div>
+        <b>Bonus answers:</b>
+        ${answersError ? `<span class="bad">Couldn't load results (${esc(answersError)})</span>`
+          : answers ? `${source}${liveStats ? ` · <b>${esc(live.title)}</b>: ${liveStats.total} answered, <span class="ok">${liveStats.correct} correct</span>, <span class="bad">${liveStats.wrong} wrong</span>` : ""}`
+          : "Download the responses from Microsoft Forms (Open in Excel) and import the file here."}
+      </div>
+      <div class="res-actions">
+        ${liveStats ? `<button class="btn res" data-act="results" data-id="${live.id}">View results</button>` : ""}
+        <label class="btn" title="Import a Microsoft Forms / Excel (.xlsx) or CSV file">${imported ? "Import newer file" : "Import results"}<input type="file" id="resFile" accept=".xlsx,.csv" hidden /></label>
+        ${imported ? `<button class="btn warn" id="resClear">Clear import</button>` : ""}
+        ${answers && !imported ? `<button class="btn" id="resReload">Refresh</button>` : ""}
+      </div>`;
+    $("resFile").addEventListener("change", (e) => { if (e.target.files[0]) importFile(e.target.files[0]); });
+    $("resClear")?.addEventListener("click", async () => {
+      if (!confirm("Remove the imported results from this browser?")) return;
+      localStorage.removeItem(IMPORT_KEY);
+      await loadAnswers(); render(); toast("Imported results cleared.");
+    });
+    $("resReload")?.addEventListener("click", async () => { await loadAnswers(); render(); toast("Results refreshed."); });
+
     let month = "";
     $("list").innerHTML = issues.map((i) => {
       const m = parseDate(i.publish).toLocaleDateString(undefined, { month: "long", year: "numeric" });
@@ -208,15 +412,18 @@ window.TIPS = ${JSON.stringify(tips)};
         !isRel ? `<button class="btn icon" data-act="up" data-id="${i.id}" title="Move earlier" ${u <= 0 ? "disabled" : ""}>&uarr;</button>` : "",
         !isRel ? `<button class="btn icon" data-act="down" data-id="${i.id}" title="Move later" ${u === unreleased.length - 1 ? "disabled" : ""}>&darr;</button>` : "",
         !isRel ? `<button class="btn icon warn" data-act="delete" data-id="${i.id}" title="Delete issue">&times;</button>` : "",
+        isRel && answers ? `<button class="btn res" data-act="results" data-id="${i.id}">Results</button>` : "",
         i === next ? `<button class="btn go" data-act="release">Release</button>` : "",
         i === live && relIssues.length > 1 ? `<button class="btn warn" data-act="undo">Undo release</button>` : ""
       ].join("");
+      const s = isRel && answers ? statsFor(i) : null;
       return `${header}<div class="row" style="--c:${i.theme}">
         <span class="bar"></span>
         <div>
           <small>Issue #${issues.indexOf(i) + 1} · ${fmtDate(i.publish)}</small>
           <h4>${esc(i.title)} ${chip}</h4>
           <div class="bq">${Math.min(i.facts.length, MAX_FACTS)} fun facts · Bonus: ${esc(i.bonus.q)} <b>(${letters[i.bonus.answer]}. ${esc(i.bonus.options[i.bonus.answer])})</b></div>
+          ${s ? `<div class="stats"><span>${s.total} answered</span><span class="ok">${s.correct} correct</span><span class="bad">${s.wrong} wrong</span></div>` : ""}
         </div>
         <div class="actions">${actions}</div>
       </div>`;
@@ -243,6 +450,7 @@ window.TIPS = ${JSON.stringify(tips)};
           if (!confirm(`Undo the release of "${live.title}"? Readers will see the previous issue again.`)) return;
           return setReleased(released.filter((id) => id !== live.id), `"${live.title}" was un-released.`);
         case "edit": return openEditor(issue);
+        case "results": return openResults(issue);
         case "up": return swapDates(issue, unreleased[u - 1], `Moved "${issue.title}" earlier.`);
         case "down": return swapDates(issue, unreleased[u + 1], `Moved "${issue.title}" later.`);
         case "delete":
@@ -383,6 +591,7 @@ window.TIPS = ${JSON.stringify(tips)};
       if (Array.isArray(w.TIPS)) tips = w.TIPS;
     }
     released = await backend.load();
+    await loadAnswers();
     render();
   }
 
