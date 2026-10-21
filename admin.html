@@ -72,6 +72,20 @@
     .res-table td { padding: 8px; border-bottom: 1px solid #eef1f7; }
     @media (max-width: 640px) { .res-bar { grid-template-columns: 1fr 40px; } .res-bar .track { grid-column: 1 / -1; grid-row: 2; } }
 
+    /* Leaderboard */
+    .lb-podium { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 6px 0 18px; }
+    .lb-podium div { border-radius: 16px; padding: 14px; text-align: center; background: #f5f8fc; }
+    .lb-podium span { display: block; font-family: "Baloo 2"; font-weight: 800; font-size: 22px; }
+    .lb-podium b { display: block; font-size: 15px; }
+    .lb-podium em { font-style: normal; font-weight: 800; color: var(--muted); }
+    .lb-podium .lb-p1 { background: #fff6dd; border: 2px solid #ffd23f; }
+    .lb-podium .lb-p2 { background: #eef1f7; border: 2px solid #c7d2e3; }
+    .lb-podium .lb-p3 { background: #fff2e5; border: 2px solid #f2b38a; }
+    .lb-scroll { overflow-x: auto; }
+    .lb-table th, .lb-table td { white-space: nowrap; }
+    .lb-cell { text-align: center; font-weight: 800; }
+    .lb-ok { color: #16955f; } .lb-bad { color: #e0435a; } .lb-pend { color: #e69500; } .lb-none { color: #c7d2e3; }
+
     /* Editor */
     .edit-dlg { width: min(900px, 96vw); max-height: 92vh; padding: 0; border: 0; border-radius: 22px; color: var(--ink); box-shadow: 0 20px 60px rgba(0,0,0,.3); }
     .edit-dlg::backdrop { background: rgba(29,43,79,.55); backdrop-filter: blur(3px); }
@@ -201,6 +215,6 @@
 
   <script src="data.js?v=20261022"></script>
   <script src="icons.js?v=20261022"></script>
-  <script src="admin.js?v=20261022"></script>
+  <script src="admin.js?v=20261023"></script>
 </body>
 </html>

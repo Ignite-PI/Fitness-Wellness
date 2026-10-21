@@ -275,6 +275,63 @@ window.TIPS = ${JSON.stringify(tips)};
 
   const fmtTime = (t) => { const d = new Date(t); return isNaN(d) ? "" : d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); };
 
+  // Total score per person across all issues whose answer has been revealed (3 points per correct bonus)
+  const POINTS = 3;
+  function leaderboard() {
+    const rel = issues.filter((i) => released.includes(i.id));
+    const scored = rel.slice(0, -1); // the live issue's answer isn't revealed yet
+    const live = rel[rel.length - 1];
+    const people = new Map();
+    const entry = (p) => {
+      const k = p.name.toLowerCase();
+      if (!people.has(k)) people.set(k, { name: p.name, points: 0, correct: 0, answered: 0, weeks: {} });
+      return people.get(k);
+    };
+    for (const issue of scored) {
+      for (const p of statsFor(issue).people) {
+        const e = entry(p);
+        const ok = p.answer === issue.bonus.answer;
+        e.answered++;
+        if (ok) { e.correct++; e.points += POINTS; }
+        e.weeks[issue.id] = ok ? "correct" : "wrong";
+      }
+    }
+    if (live) for (const p of statsFor(live).people) entry(p).weeks[live.id] = "pending";
+    const rows = [...people.values()].sort((a, b) => b.points - a.points || b.answered - a.answered || a.name.localeCompare(b.name));
+    rows.forEach((r, i) => { r.rank = i && r.points === rows[i - 1].points ? rows[i - 1].rank : i + 1; });
+    return { rows, cols: live ? [...scored, live] : scored, live };
+  }
+
+  function openLeaderboard() {
+    const { rows, cols, live } = leaderboard();
+    const mark = { correct: '<span class="lb-ok" title="Correct">&#10003;</span>', wrong: '<span class="lb-bad" title="Wrong">&#10007;</span>', pending: '<span class="lb-pend" title="Answer not revealed yet">?</span>' };
+    $("resTitle").textContent = "Leaderboard";
+    $("resBody").innerHTML = `
+      <p class="ed-hint">${POINTS} points per correct Bonus Trivia answer, counted once the answer is revealed. ${live ? `"${esc(live.title)}" is still open, so it shows as <b>?</b> and isn't counted yet.` : ""}</p>
+      ${rows.length ? `<div class="lb-podium">${rows.slice(0, 3).map((r) => `<div class="lb-p${r.rank}"><span>#${r.rank}</span><b>${esc(r.name)}</b><em>${r.points} pts</em></div>`).join("")}</div>
+      <div class="lb-scroll"><table class="res-table lb-table">
+        <thead><tr><th>Rank</th><th>Name</th><th>Points</th><th>Correct</th>${cols.map((i) => `<th title="${esc(i.title)}">#${issues.indexOf(i) + 1}</th>`).join("")}</tr></thead>
+        <tbody>${rows.map((r) => `<tr>
+          <td><b>${r.rank}</b></td><td>${esc(r.name)}</td><td><b>${r.points}</b></td><td>${r.correct}/${r.answered}</td>
+          ${cols.map((i) => `<td class="lb-cell">${mark[r.weeks[i.id]] || '<span class="lb-none">&ndash;</span>'}</td>`).join("")}
+        </tr>`).join("")}</tbody>
+      </table></div>
+      <p class="ed-hint">Columns #1, #2... are issue numbers. Hover over them to see the title. &ndash; = didn't answer.</p>`
+      : `<p class="ed-hint" style="text-align:center;margin:20px 0">No answers yet.</p>`}`;
+    $("resCsv").onclick = () => {
+      const q = (v) => `"${String(v).replace(/"/g, '""')}"`;
+      const head = ["Rank", "Name", "Points", "Correct", "Answered", ...cols.map((i) => `#${issues.indexOf(i) + 1} ${i.title}`)];
+      const csv = [head.map(q).join(","), ...rows.map((r) =>
+        [r.rank, r.name, r.points, r.correct, r.answered, ...cols.map((i) => r.weeks[i.id] || "")].map(q).join(","))].join("\r\n");
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv" }));
+      a.download = "trivia-leaderboard.csv";
+      a.click();
+    };
+    $("resRefresh").onclick = async () => { await loadAnswers(); render(); openLeaderboard(); };
+    if (!$("resDlg").open) $("resDlg").showModal();
+  }
+
   function openResults(issue) {
     const s = statsFor(issue);
     const pct = (n) => (s.total ? Math.round((n / s.total) * 100) : 0);
@@ -384,11 +441,13 @@ window.TIPS = ${JSON.stringify(tips)};
           : "Download the responses from Microsoft Forms (Open in Excel) and import the file here."}
       </div>
       <div class="res-actions">
+        ${answers ? `<button class="btn res" id="lbOpen">Leaderboard</button>` : ""}
         ${liveStats ? `<button class="btn res" data-act="results" data-id="${live.id}">View results</button>` : ""}
         <label class="btn" title="Import a Microsoft Forms / Excel (.xlsx) or CSV file">${imported ? "Import newer file" : "Import results"}<input type="file" id="resFile" accept=".xlsx,.csv" hidden /></label>
         ${imported ? `<button class="btn warn" id="resClear">Clear import</button>` : ""}
         ${answers && !imported ? `<button class="btn" id="resReload">Refresh</button>` : ""}
       </div>`;
+    $("lbOpen")?.addEventListener("click", openLeaderboard);
     $("resFile").addEventListener("change", (e) => { if (e.target.files[0]) importFile(e.target.files[0]); });
     $("resClear")?.addEventListener("click", async () => {
       if (!confirm("Remove the imported results from this browser?")) return;
