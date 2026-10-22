@@ -84,31 +84,57 @@
   const svgToUrl = (svg) => "data:image/svg+xml;charset=utf-8," +
     encodeURIComponent(svg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"'));
 
+  const loadLogos = async () => {
+    const [fit, ct] = await Promise.all([loadImage("images/fit-logo.png"), loadImage("images/clinical-tower-logo.png")]);
+    return { fit, ct };
+  };
+
+  // Logo strip (only drawn when the logo files exist in images/). Returns the new y.
+  function drawLogoStrip(ctx, logos, y) {
+    const { fit, ct } = logos;
+    if (!fit && !ct) return y;
+    const stripH = 64;
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.roundRect(P, y, W - 2 * P, stripH, 16); ctx.fill();
+    const fitDraw = (img, x, h, alignRight) => {
+      const w = (img.naturalWidth / img.naturalHeight) * h;
+      ctx.drawImage(img, alignRight ? x - w : x, y + (stripH - h) / 2, w, h);
+    };
+    if (fit) fitDraw(fit, P + 14, 52, false);
+    if (ct) fitDraw(ct, W - P - 14, 48, true);
+    ctx.font = font(800, 11); ctx.fillStyle = MUTED; ctx.textAlign = "center";
+    ctx.fillText("PRESENTS", W / 2, y + stripH / 2 - 6);
+    ctx.textAlign = "left";
+    return y + stripH + 12;
+  }
+
+  // Draws twice: once to measure the height, then for real at the requested pixel width
+  async function renderCanvas(width, drawFn, data) {
+    await Promise.all([
+      document.fonts.load(font(800, 20, "Baloo 2")), document.fonts.load(font(400, 13)),
+      document.fonts.load(font(700, 13)), document.fonts.load(font(800, 13))
+    ]);
+    const H = drawFn(document.createElement("canvas").getContext("2d"), data, 0);
+    const scale = width / W;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = Math.ceil(H * scale);
+    const ctx = canvas.getContext("2d");
+    ctx.scale(scale, scale);
+    drawFn(ctx, data, H);
+    return canvas;
+  }
+
+  // Shared drawing helpers (used by newsletter.js for its email image)
+  window.PosterKit = { W, P, INK, MUTED, RED, YELLOW, GREEN, PALETTE, font, wrap, drawText, pill, loadImage, loadLogos, drawLogoStrip, renderCanvas };
+
   // Draws the full poster at logical width W and returns its logical height
   function draw(ctx, d, H) {
     const { issue, icons, revealed } = d;
     ctx.textBaseline = "top";
     ctx.fillStyle = "#f5faf7";
     ctx.fillRect(0, 0, W, H);
-    let y = P;
-
-    // Logo strip (only drawn when the logo files exist in images/)
-    const { fit, ct } = d.logos;
-    if (fit || ct) {
-      const stripH = 64;
-      ctx.fillStyle = "#fff";
-      ctx.beginPath(); ctx.roundRect(P, y, W - 2 * P, stripH, 16); ctx.fill();
-      const fitDraw = (img, x, h, alignRight) => {
-        const w = (img.naturalWidth / img.naturalHeight) * h;
-        ctx.drawImage(img, alignRight ? x - w : x, y + (stripH - h) / 2, w, h);
-      };
-      if (fit) fitDraw(fit, P + 14, 52, false);
-      if (ct) fitDraw(ct, W - P - 14, 48, true);
-      ctx.font = font(800, 11); ctx.fillStyle = MUTED; ctx.textAlign = "center";
-      ctx.fillText("PRESENTS", W / 2, y + stripH / 2 - 6);
-      ctx.textAlign = "left";
-      y += stripH + 12;
-    }
+    let y = drawLogoStrip(ctx, d.logos, P);
 
     // Header
     const titleBlock = wrap(ctx, issue.title + " Trivia", W - 2 * P - 40, 40, "Baloo 2", [800, 800]);
@@ -240,26 +266,27 @@
     return y + 20 + P;
   }
 
-  async function render(width) {
-    await Promise.all([
-      document.fonts.load(font(800, 20, "Baloo 2")), document.fonts.load(font(400, 13)),
-      document.fonts.load(font(700, 13)), document.fonts.load(font(800, 13))
-    ]);
+  async function renderTrivia(width) {
     const issue = TriviaApp.getIssue();
     const icons = await Promise.all(issue.facts.slice(0, TriviaApp.MAX_FACTS).map((f) =>
       loadImage(f.image || svgToUrl(window.iconFor(f)))));
-    const [fit, ct] = await Promise.all([loadImage("images/fit-logo.png"), loadImage("images/clinical-tower-logo.png")]);
-    const data = { issue, icons, revealed: TriviaApp.isRevealed(issue), link: bonusLink(issue), logos: { fit, ct } };
-    const H = draw(document.createElement("canvas").getContext("2d"), data, 0);
-    const scale = width / W;
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = Math.ceil(H * scale);
-    const ctx = canvas.getContext("2d");
-    ctx.scale(scale, scale);
-    draw(ctx, data, H);
-    return canvas;
+    const data = { issue, icons, revealed: TriviaApp.isRevealed(issue), link: bonusLink(issue), logos: await loadLogos() };
+    return renderCanvas(width, draw, data);
   }
+
+  // What gets exported. Pages can provide their own via window.ExportSource (e.g. the newsletter).
+  function triviaSource() {
+    const issue = TriviaApp.getIssue();
+    return {
+      render: renderTrivia,
+      link: bonusLink(issue),
+      file: `weekly-trivia-${issue.id}`,
+      alt: `The Weekly Trivia - ${issue.title}. Click to answer the Bonus Trivia!`,
+      linkText: "Click here to answer this week's Bonus Trivia &rarr;",
+      copied: "Copied! Paste into your email (Ctrl+V). The image links to the Bonus Trivia."
+    };
+  }
+  const getSource = () => (window.ExportSource ? window.ExportSource() : triviaSource());
 
   // ---- Dialog ----
   const dlg = $("exportDialog");
@@ -276,12 +303,12 @@
     const id = ++job;
     $("expInfo").textContent = "Generating...";
     $("expActions").querySelectorAll("button").forEach((b) => (b.disabled = true));
-    const canvas = await render(width);
+    const src = getSource();
+    const canvas = await src.render(width);
     const blob = await new Promise((r) => canvas.toBlob(r, type, 0.92));
     if (id !== job) return;
     if (current) URL.revokeObjectURL(current.url);
-    const issue = TriviaApp.getIssue();
-    current = { canvas, blob, type, width, url: URL.createObjectURL(blob), link: bonusLink(issue), title: issue.title };
+    current = { canvas, blob, type, width, url: URL.createObjectURL(blob), link: src.link, src };
     current.html = emailHtml(canvas.toDataURL(type, 0.92));
     $("expPreview").src = current.url;
     const kb = blob.size / 1024;
@@ -309,15 +336,16 @@
   $("expDownload").addEventListener("click", () => {
     const a = document.createElement("a");
     a.href = current.url;
-    a.download = `weekly-trivia-${TriviaApp.getIssue().id}-${current.width}px.${current.type === "image/png" ? "png" : "jpg"}`;
+    a.download = `${current.src.file}-${current.width}px.${current.type === "image/png" ? "png" : "jpg"}`;
     a.click();
   });
 
-  // Email-ready HTML: the whole image links to the Bonus Trivia, plus a text link as backup
+  // Email-ready HTML: the whole image links to the page, plus a text link as backup
   function emailHtml(dataUrl) {
-    const link = current.link;
-    return `<div><a href="${link}" target="_blank"><img src="${dataUrl}" width="600" alt="The Weekly Trivia - ${current.title}. Click to answer the Bonus Trivia!" style="display:block;width:100%;max-width:600px;height:auto;border:0"></a>` +
-      `<p style="font-family:Arial,sans-serif;font-size:15px;font-weight:bold"><a href="${link}" target="_blank" style="color:#16a085">Click here to answer this week's Bonus Trivia &rarr;</a></p></div>`;
+    const { link, src } = current;
+    const alt = src.alt.replace(/"/g, "&quot;");
+    return `<div><a href="${link}" target="_blank"><img src="${dataUrl}" width="600" alt="${alt}" style="display:block;width:100%;max-width:600px;height:auto;border:0"></a>` +
+      `<p style="font-family:Arial,sans-serif;font-size:15px;font-weight:bold"><a href="${link}" target="_blank" style="color:#16a085">${src.linkText}</a></p></div>`;
   }
 
   // Fallback: select real linked content on the page and use the legacy copy command
@@ -339,7 +367,7 @@
   }
 
   $("expCopy").addEventListener("click", async () => {
-    const ok = () => toast("Copied! Paste into your email (Ctrl+V). The image links to the Bonus Trivia.");
+    const ok = () => toast(current.src.copied);
     // Clipboard only accepts PNG images, so JPEG selections are copied as PNG.
     // The blob is passed as a promise so write() is called immediately within the click.
     const png = current.type === "image/png" ? current.blob

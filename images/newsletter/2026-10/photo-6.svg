@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e69500"/><stop offset="1" stop-color="#ffd23f"/></linearGradient></defs>
+<rect width="800" height="600" fill="url(#g)"/>
+<circle cx="680.0" cy="120.0" r="210.0" fill="#fff" opacity=".12"/>
+<circle cx="80.0" cy="540.0" r="180.0" fill="#fff" opacity=".1"/>
+<g fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round" opacity=".9">
+<rect x="330.0" y="230.0" width="140" height="100" rx="14"/>
+<circle cx="400.0" cy="280.0" r="28"/><path d="M370.0 230.0 l10 -18 h40 l10 18"/></g>
+<text x="400.0" y="380.0" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="34" fill="#fff">Photo 6</text>
+<text x="400.0" y="420.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#fff" opacity=".85">Sample - replace with your picture</text>
+</svg>

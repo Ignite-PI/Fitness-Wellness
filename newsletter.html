@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monthly Newsletter | The Weekly Trivia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=20261024" />
+  <link rel="stylesheet" href="newsletter.css?v=20261024" />
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand">
+      <div class="brand-logos">
+        <img src="images/fit-logo.png" alt="Fitness In Time" class="logo-fit" onerror="this.remove()" />
+        <img src="images/clinical-tower-logo.png" alt="Clinical Tower" class="logo-ct" onerror="this.remove()" />
+      </div>
+      <div>
+        <h1>Wellness Monthly</h1>
+        <p>Our monthly newsletter &middot; A healthier, happier you</p>
+      </div>
+    </div>
+    <nav>
+      <a href="index.html">Weekly Trivia</a>
+      <a href="#articles">Highlights</a>
+      <a href="#gallery">Gallery</a>
+      <a href="#announcements">Announcements</a>
+    </nav>
+    <button id="exportBtn" class="export-btn" title="Print or save this newsletter as an image">Print / Save Image</button>
+  </header>
+
+  <main id="nl">
+    <div id="months" class="nl-months"></div>
+    <div id="sampleNote" class="nl-sample hidden">This newsletter uses <b>sample content</b> to show the layout. It will be replaced with real stories and photos.</div>
+
+    <section class="nl-hero" id="hero"></section>
+
+    <section id="articles">
+      <h3 class="section-title"><span>Highlights</span> What happened this month</h3>
+      <div id="articleList" class="nl-articles"></div>
+    </section>
+
+    <section id="gallery">
+      <h3 class="section-title"><span>Photo Gallery</span> Click a photo to enlarge</h3>
+      <div id="galleryGrid" class="nl-gallery"></div>
+    </section>
+
+    <section id="trivia">
+      <h3 class="section-title"><span>Trivia Recap</span> This month's issues and top scorers</h3>
+      <div class="nl-trivia">
+        <div id="winners" class="nl-winners"></div>
+        <div id="recap" class="nl-recap"></div>
+      </div>
+    </section>
+
+    <section id="announcements">
+      <h3 class="section-title"><span>Announcements</span> Coming up</h3>
+      <div id="annList" class="nl-ann"></div>
+    </section>
+  </main>
+
+  <footer class="tips" id="tips"></footer>
+  <div class="partners">
+    <span>Brought to you by</span>
+    <img src="images/fit-logo.png" alt="Fitness In Time" class="logo-fit" onerror="this.remove()" />
+    <img src="images/clinical-tower-logo.png" alt="Clinical Tower - Clinical Services & Specialized Business Operations" class="logo-ct" onerror="this.remove()" />
+  </div>
+
+  <dialog id="lightbox" class="nl-lightbox">
+    <button class="exp-close" id="lbClose" aria-label="Close">&times;</button>
+    <button class="nl-lb-nav prev" id="lbPrev" aria-label="Previous">&lsaquo;</button>
+    <figure><img id="lbImg" alt="" /><figcaption id="lbCap"></figcaption></figure>
+    <button class="nl-lb-nav next" id="lbNext" aria-label="Next">&rsaquo;</button>
+  </dialog>
+
+  <div id="toast" class="toast"></div>
+
+  <dialog id="exportDialog" class="export-dialog">
+    <div class="exp-head">
+      <h3>Print / Save Image</h3>
+      <button id="expClose" class="exp-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="exp-body">
+      <div class="exp-controls">
+        <label class="exp-label">Format</label>
+        <div class="exp-seg">
+          <label><input type="radio" name="fmt" value="image/png" /><span>PNG</span></label>
+          <label><input type="radio" name="fmt" value="image/jpeg" checked /><span>JPEG</span></label>
+        </div>
+        <p class="exp-hint">JPEG keeps photo-heavy newsletters small for email. PNG = sharpest text.</p>
+
+        <label class="exp-label" for="expRes">Resolution (width)</label>
+        <select id="expRes">
+          <option value="600">Email: 600 px (recommended)</option>
+          <option value="1200" selected>Email HD / Retina: 1200 px</option>
+          <option value="1800">High: 1800 px</option>
+          <option value="2400">Print: 2400 px</option>
+        </select>
+        <p class="exp-hint">Most email layouts are 600 px wide. 1200 px looks crisp on phones and high-DPI screens.</p>
+
+        <p id="expInfo" class="exp-info"></p>
+        <div id="expActions" class="exp-actions">
+          <button id="expDownload" class="primary">Download</button>
+          <button id="expCopy">Copy</button>
+          <button id="expPrint">Print</button>
+        </div>
+        <p class="exp-hint">"Copy" lets you paste the image straight into Outlook or Gmail (Ctrl+V). Readers can click it to open the full newsletter.</p>
+
+        <label class="exp-label">Newsletter link</label>
+        <a id="expLink" class="exp-link" target="_blank"></a>
+        <p class="exp-hint">Downloaded files can't contain links. After inserting a downloaded image in your email, select it and press <b>Ctrl+K</b> to add this link.</p>
+        <p id="expLocalWarn" class="exp-warn hidden">This link uses <b>localhost</b>, so it only works on your computer. Publish the site and set <code>SITE_URL</code> in data.js so email readers can open it.</p>
+      </div>
+      <div class="exp-preview"><img id="expPreview" alt="Image preview" /></div>
+    </div>
+  </dialog>
+
+  <script src="data.js?v=20261024"></script>
+  <script src="newsletters.js?v=20261024"></script>
+  <script src="newsletter.js?v=20261024"></script>
+  <script src="export.js?v=20261024"></script>
+</body>
+</html>
