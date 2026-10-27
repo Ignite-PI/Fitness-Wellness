@@ -166,8 +166,10 @@ window.NEWSLETTERS = ${JSON.stringify(list, null, 2)};
   // ---------- Results (bonus answers) ----------
   // Accepts rows from server.py ({issue,name,answer,time}), a SharePoint list ({IssueId,Title,Answer,Created})
   // or an Excel table in SharePoint ({IssueId,Name,Answer,Time}) returned by Power Automate
+  // Microsoft Forms stores pre-filled answers with quotes, e.g. "2026-w43" or "A"
+  const unquote = (v) => String(v ?? "").trim().replace(/^["'\u201c\u201d]+|["'\u201c\u201d]+$/g, "").trim();
   const normalize = (rows) => rows.map((r) => ({
-    issue: String(r.issue ?? r.IssueId ?? "").trim(),
+    issue: unquote(r.issue ?? r.IssueId),
     name: String(r.name ?? r.Name ?? r.Title ?? "").trim().replace(/\s+/g, " "),
     answer: r.answer ?? r.Answer ?? "",
     time: r.time ?? r.Time ?? r.Created ?? ""
@@ -241,7 +243,7 @@ window.NEWSLETTERS = ${JSON.stringify(list, null, 2)};
     const iTime = find((h) => h.includes("completion"), (h) => h === "time", (h) => h.includes("start"));
     if (iIssue < 0 || iAns < 0 || (iName < 0 && iEmail < 0)) throw new Error("Couldn't find the Issue, Answer and Name columns in this file.");
     return rows.slice(1).map((r) => {
-      const raw = String(r[iAns] ?? "").trim();
+      const raw = unquote(r[iAns]);
       const letter = "ABCD".indexOf(raw.charAt(0).toUpperCase());
       const t = r[iTime];
       const time = t && /^\d+(\.\d+)?$/.test(String(t)) ? new Date(Math.round((Number(t) - 25569) * 864e5)).toISOString() : t || "";
