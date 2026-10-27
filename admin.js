@@ -49,6 +49,16 @@ window.SITE_URL = ${JSON.stringify(siteUrl)};
 window.TIPS = ${JSON.stringify(tips)};
 `;
 
+  // Keep in sync with render_newsletters_js() in server.py
+  const nlJs = (list) =>
+    `// Monthly newsletters. Managed from the Admin page (Newsletter tab); you can also edit it by hand.
+// - newsletter.html shows the newest month (?month=YYYY-MM opens a specific one).
+// - Photos live in images/newsletter/<month>/. Text supports <b>...</b>; blank lines separate paragraphs.
+// - \`sections\` sets the order of the sections; leaving one out hides it.
+// - The Trivia recap lists that month's released trivia issues automatically.
+window.NEWSLETTERS = ${JSON.stringify(list, null, 2)};
+`;
+
   // ---------- Backends ----------
   // Local mode: server.py stores files and checks the admin password
   const localBackend = {
@@ -75,6 +85,12 @@ window.TIPS = ${JSON.stringify(tips)};
       return res.text();
     },
     saveData() { return this.call({ data: { issues, siteUrl, tips } }); },
+    async loadNewsletters() {
+      const res = await fetch("newsletters.js?t=" + Date.now(), { cache: "no-store" });
+      return res.ok ? res.text() : null;
+    },
+    saveNewsletters(list) { return this.call({ newsletters: list }); },
+    uploadImage(path, b64) { return this.call({ upload: { path, data: b64 } }); },
     savedMsg: ""
   };
 
@@ -129,6 +145,15 @@ window.TIPS = ${JSON.stringify(tips)};
     },
     loadData() { return this.getFile("data.js"); },
     saveData(message) { return this.putFile("data.js", dataJs(), message); },
+    loadNewsletters() { return this.getFile("newsletters.js"); },
+    saveNewsletters(list, message) { return this.putFile("newsletters.js", nlJs(list), message || "Update newsletters"); },
+    async uploadImage(path, b64) {
+      const res = await this.req(`/contents/${path.split("/").map(encodeURIComponent).join("/")}`, {
+        method: "PUT",
+        body: JSON.stringify({ message: `Add newsletter photo ${path.split("/").pop()}`, content: b64 })
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || "Photo upload failed");
+    },
     savedMsg: " Live in about 1 minute while GitHub Pages updates."
   };
 
@@ -277,10 +302,11 @@ window.TIPS = ${JSON.stringify(tips)};
 
   // Total score per person across all issues whose answer has been revealed (3 points per correct bonus)
   const POINTS = 3;
-  function leaderboard() {
+  // month = "YYYY-MM" limits the scores to issues published that month (used for newsletter winners)
+  function leaderboard(month) {
     const rel = issues.filter((i) => released.includes(i.id));
-    const scored = rel.slice(0, -1); // the live issue's answer isn't revealed yet
-    const live = rel[rel.length - 1];
+    const scored = rel.slice(0, -1).filter((i) => !month || i.publish.startsWith(month)); // the live issue's answer isn't revealed yet
+    const live = month ? null : rel[rel.length - 1];
     const people = new Map();
     const entry = (p) => {
       const k = p.name.toLowerCase();
@@ -652,7 +678,15 @@ window.TIPS = ${JSON.stringify(tips)};
     released = await backend.load();
     await loadAnswers();
     render();
+    document.dispatchEvent(new Event("admin:ready"));
   }
+
+  // Shared with admin-newsletter.js (Newsletter tab)
+  window.AdminCore = {
+    backend, esc, toast,
+    parseScript: parseDataJs,
+    leaderboardFor: (month) => (answers ? leaderboard(month).rows : null)
+  };
 
   $("login").addEventListener("submit", async (e) => {
     e.preventDefault();

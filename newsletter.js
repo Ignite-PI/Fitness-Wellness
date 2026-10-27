@@ -80,6 +80,12 @@
   }).join("");
   $("announcements").classList.toggle("hidden", !(nl.announcements || []).length);
 
+  // Section order and visibility from the editor; sections left out are hidden
+  const ALL_SECTIONS = ["articles", "gallery", "trivia", "announcements"];
+  const ORDER = Array.isArray(nl.sections) ? nl.sections.filter((k) => ALL_SECTIONS.includes(k)) : ALL_SECTIONS;
+  ALL_SECTIONS.forEach((k) => { if (!ORDER.includes(k)) $(k).classList.add("hidden"); });
+  ORDER.forEach((k) => $("nl").appendChild($(k)));
+
   $("tips").innerHTML = (window.TIPS || []).map((t) => `<span>${esc(t)}</span>`).join("");
 
   // ---------- Lightbox ----------
@@ -153,7 +159,9 @@
 
     if (d.cover) { drawCover(ctx, d.cover, P, y, inner, inner * 0.42, 18); y += inner * 0.42 + 22; } else y += 8;
 
-    // Articles
+    // Sections are drawn in the order set in the editor (nl.sections)
+    const blocks = {
+    articles: () => {
     if ((nl.articles || []).length) {
       section("Highlights");
       (nl.articles || []).forEach((a, ai) => {
@@ -182,16 +190,19 @@
       });
       y += 10;
     }
+    },
 
     // Gallery (up to 6 photos, 3 per row)
+    gallery: () => {
     if (d.gallery.length) {
       section("Photo Gallery");
       const gap = 8, cols = 3, s = (inner - gap * (cols - 1)) / cols;
       d.gallery.forEach((img, i) => drawCover(ctx, img, P + (i % cols) * (s + gap), y + Math.floor(i / cols) * (s + gap), s, s, 12));
       y += Math.ceil(d.gallery.length / cols) * (s + gap) + 14;
     }
+    },
 
-    // Trivia recap
+    trivia: () => {
     section("Trivia Recap");
     const cardTop = y;
     const recapH = 18 + (winners.length ? 24 + 74 + 16 : 0) + (monthIssues.length ? 24 + monthIssues.length * 46 : 0)
@@ -225,8 +236,9 @@
     }
     if (!winners.length && !monthIssues.length) { ctx.font = font(700, 13); ctx.fillStyle = MUTED; ctx.fillText("Trivia results coming soon.", P + 18, ty); }
     y = cardTop + recapH + 22;
+    },
 
-    // Announcements
+    announcements: () => {
     if ((nl.announcements || []).length) {
       section("Announcements");
       (nl.announcements || []).forEach((a) => {
@@ -245,6 +257,9 @@
       });
       y += 12;
     }
+    }
+    };
+    ORDER.forEach((k) => blocks[k]?.());
 
     // Call to action
     ctx.fillStyle = theme;

@@ -7,7 +7,7 @@
   <title>Admin | The Weekly Trivia</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20261022" />
+  <link rel="stylesheet" href="styles.css?v=20261027" />
   <style>
     .admin { max-width: 980px; margin: 0 auto; padding: 24px 20px 60px; }
     .login { max-width: 380px; margin: 60px auto; background: #fff; padding: 28px; border-radius: 22px; box-shadow: 0 10px 30px rgba(29,43,79,.1); }
@@ -71,6 +71,36 @@
     .res-table th { text-align: left; color: var(--muted); font-size: 12px; text-transform: uppercase; padding: 8px; border-bottom: 2px solid #e3ecf3; }
     .res-table td { padding: 8px; border-bottom: 1px solid #eef1f7; }
     @media (max-width: 640px) { .res-bar { grid-template-columns: 1fr 40px; } .res-bar .track { grid-column: 1 / -1; grid-row: 2; } }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tab { font: inherit; font-weight: 800; font-size: 16px; padding: 10px 20px; border-radius: 999px; border: 2px solid var(--ink); background: #fff; color: var(--ink); cursor: pointer; }
+    .tab.active { background: var(--ink); color: #fff; }
+
+    /* Newsletter editor */
+    .nle-dlg { width: min(980px, 96vw); }
+    .nle-check { display: flex !important; align-items: center; gap: 8px; font-weight: 700 !important; }
+    .nle-check input { width: auto !important; margin: 0 !important; }
+    .nle-cover { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .nle-cover img { width: 260px; height: 110px; object-fit: cover; border-radius: 12px; }
+    .nle-sections { display: grid; gap: 6px; }
+    .nle-sec { display: flex; justify-content: space-between; align-items: center; background: #f5f8fc; border-radius: 12px; padding: 6px 10px; }
+    .nle-sec .btn.icon, .nle-tools .btn.icon, .nle-card-head .btn.icon { width: 32px; padding: 5px 0; text-align: center; font-size: 15px; line-height: 1; }
+    .nle-card { background: #f5f8fc; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+    .nle-card > label { margin-top: 8px; }
+    .nle-card-head { display: flex; justify-content: space-between; align-items: center; }
+    .nle-card-head span { display: flex; gap: 6px; }
+    .nle-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 6px; }
+    .nle-photo { background: #fff; border-radius: 12px; padding: 6px; display: grid; gap: 6px; }
+    .nle-photo img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; }
+    .nle-photo input { margin: 0 !important; font-size: 12px !important; padding: 5px 8px !important; }
+    .nle-tools { display: flex; gap: 4px; justify-content: center; }
+    .nle-add-photo { display: grid !important; place-items: center; min-height: 140px; border: 2px dashed #9cc3ec; border-radius: 12px; color: #2d6cdf; font-weight: 800 !important; cursor: pointer; background: #fff; }
+    .nle-add-photo:hover { background: #e7f2ff; }
+    .nle-add { width: 100%; border-style: dashed; margin-bottom: 4px; }
+    .nle-winners { display: grid; gap: 8px; margin-bottom: 8px; }
+    .nle-winners div { display: grid; grid-template-columns: 30px 1fr 110px; gap: 8px; align-items: center; }
+    .nle-winners input { margin: 0 !important; }
 
     /* Leaderboard */
     .lb-podium { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 6px 0 18px; }
@@ -145,11 +175,46 @@
     </form>
 
     <section id="panel" class="hidden">
-      <div id="hero" class="hero-card"></div>
-      <div id="resBar" class="res-top"></div>
-      <div id="list" class="list"></div>
+      <div class="tabs">
+        <button class="tab active" data-tab="triviaTab">Weekly Trivia</button>
+        <button class="tab" data-tab="nlTab">Newsletter</button>
+      </div>
+      <div id="triviaTab">
+        <div id="hero" class="hero-card"></div>
+        <div id="resBar" class="res-top"></div>
+        <div id="list" class="list"></div>
+      </div>
+      <div id="nlTab" class="hidden">
+        <div class="hero-card">
+          <div style="flex:1;min-width:240px">
+            <small style="opacity:.8;font-weight:800">MONTHLY NEWSLETTER</small>
+            <h2>Wellness Monthly</h2>
+            <p>Create and edit each month's newsletter: articles, photos, gallery, winners and announcements.</p>
+          </div>
+          <div class="hero-actions">
+            <a class="btn ghost" href="newsletter.html" target="_blank">View newsletter</a>
+            <button class="btn go" id="nlNew">+ New newsletter</button>
+          </div>
+        </div>
+        <div id="nlList" class="list"></div>
+      </div>
     </section>
   </main>
+
+  <dialog id="nlDlg" class="edit-dlg nle-dlg">
+    <form id="nlForm" novalidate>
+      <div class="ed-head">
+        <h3 id="nlEdTitle">Edit newsletter</h3>
+        <button type="button" id="nlClose" class="exp-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="ed-body" id="nlEdBody"></div>
+      <div class="ed-foot">
+        <p id="nlErr" class="err" style="margin-right:auto"></p>
+        <button type="button" class="btn" id="nlCancel">Cancel</button>
+        <button type="submit" class="btn primary" id="nlSave">Save</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="editDlg" class="edit-dlg">
     <form id="editForm" novalidate>
@@ -213,8 +278,10 @@
 
   <div id="toast" class="toast"></div>
 
-  <script src="data.js?v=20261022"></script>
-  <script src="icons.js?v=20261022"></script>
-  <script src="admin.js?v=20261023"></script>
+  <script src="data.js?v=20261027"></script>
+  <script src="icons.js?v=20261027"></script>
+  <script src="newsletters.js?v=20261027"></script>
+  <script src="admin.js?v=20261027"></script>
+  <script src="admin-newsletter.js?v=20261027"></script>
 </body>
 </html>
