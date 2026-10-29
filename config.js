@@ -1,3 +1,7 @@
+// GitHub repository that stores the site files. The Admin page saves edits and releases here
+// (with your GitHub token) on any host except localhost, e.g. GitHub Pages or Vercel.
+window.GITHUB_REPO = "Ignite-PI/Fitness-Wellness";
+
 // Where readers' Bonus Trivia answers go.
 
 // Microsoft Forms pre-filled link (recommended). Create it in Forms with "Get pre-filled URL",

@@ -94,9 +94,12 @@ window.NEWSLETTERS = ${JSON.stringify(list, null, 2)};
     savedMsg: ""
   };
 
-  // GitHub Pages mode: files are updated in the repo through the GitHub API using the admin's token
-  const ghRepo = location.hostname.endsWith(".github.io")
-    ? `${location.hostname.split(".")[0]}/${location.pathname.split("/")[1]}` : null;
+  // GitHub mode (GitHub Pages, Vercel, ...): files are updated in the repo through the GitHub API using the admin's token.
+  // Local mode is used on localhost, where server.py saves the files.
+  const isLocal = ["localhost", "127.0.0.1", "[::1]", ""].includes(location.hostname);
+  const ghRepo = isLocal ? null
+    : window.GITHUB_REPO || (location.hostname.endsWith(".github.io")
+      ? `${location.hostname.split(".")[0]}/${location.pathname.split("/")[1]}` : null);
   const ghSha = {};
   const toB64 = (text) => {
     const bytes = new TextEncoder().encode(text);
@@ -154,7 +157,7 @@ window.NEWSLETTERS = ${JSON.stringify(list, null, 2)};
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || "Photo upload failed");
     },
-    savedMsg: " Live in about 1 minute while GitHub Pages updates."
+    savedMsg: " Live in about 1 minute while the site redeploys."
   };
 
   const backend = ghRepo ? ghBackend : localBackend;

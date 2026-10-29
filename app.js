@@ -103,7 +103,7 @@
   // or, when testing locally, to server.py
   const NAME_KEY = "weekly-trivia-name";
   const formsUrl = window.FORMS_URL || "";
-  const submitUrl = formsUrl ? "" : window.SUBMIT_URL || (location.hostname.endsWith(".github.io") ? "" : "api/answers");
+  const submitUrl = formsUrl ? "" : window.SUBMIT_URL || (["localhost", "127.0.0.1"].includes(location.hostname) ? "api/answers" : "");
 
   // Fills the Forms pre-filled link: "ISSUE" becomes the issue ID and the "A" choice becomes the picked letter
   function formLink(issue, answer) {
